@@ -1,6 +1,7 @@
 module [
     getText,
     click,
+    sendKeys,
 ]
 
 import pf.Task
@@ -28,3 +29,17 @@ click = \element ->
 
     {} |> Task.ok
 
+enterKey = "\\uE007"
+
+sendKeys : Internal.Element, Str -> Task.Task {} [WebDriverError Str]
+sendKeys = \element, str ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+    keysToSend = str |> replaceSequence "{enter}" enterKey
+    WebDriver.sendKeys serverUrl sessionId elementId keysToSend
+        |> Task.mapErr! toWebDriverError
+
+    {} |> Task.ok
+
+replaceSequence : Str, Str, Str -> Str
+replaceSequence = \str, old, new ->
+    str |> Str.replaceEach old new

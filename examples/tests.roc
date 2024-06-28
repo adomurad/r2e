@@ -10,37 +10,56 @@ import r2e.Test exposing [test]
 import r2e.Browser
 import r2e.Element
 import r2e.Assert
+import pf.Sleep
 
 main =
     Stdout.line! "Starting test suite!"
 
-    # can't run the whole suite - compiler error on Task.seq and Task.forEach
-    { result } = test1 |> Test.runTest!
+    tasks = [test1, test2]
 
-    when result is
-        Ok {} -> Stdout.line "OK"
-        Err (ErrorMsg msg) -> Stdout.line msg
+    results = Test.runAllTests! tasks
+    Test.printResults! results
 
-test1 = test "go to google and click some stuff" \browser ->
+test1 = test "find roc in google" \browser ->
+    # open google
     browser |> Browser.navigateTo! "http://google.com"
+    # find cookie confirm button
     button = browser |> Browser.findElement! (Css "#L2AGLb")
-    # get the text of the button
-    buttonText = button |> Element.getText!
-    Stdout.line! "Button text is: $(buttonText)"
-    # assert button text
-    buttonText |> Assert.shouldBe! "Accept all"
-    # click the button
+    # confirm cookies
     button |> Element.click!
-    Stdout.line! "Test End"
+    # find search input
+    searchInput = browser |> Browser.findElement! (Css ".gLFyf")
+    # search for "roc lang"
+    searchInput |> Element.sendKeys! "roc lang{enter}"
+    # wait for demo purpose
+    Sleep.millis! 500
+    # find all search results
+    searchResults = browser |> Browser.findElements! (Css ".yuRUbf")
+    # get first result
+    firstSearchResult = searchResults |> List.first |> Task.fromResult!
+    # click on first result
+    firstSearchResult |> Element.click!
+    # wait for demo purpose
+    Sleep.millis! 1000
+    # find header text
+    header = browser |> Browser.findElement! (Css "#homepage-h1")
+    # get header text
+    headerText = header |> Element.getText!
+    # check text
+    headerText |> Assert.shouldBe! "Roc"
 
-test2 = test "check if exists" \browser ->
-    browser |> Browser.navigateTo! "http://google.com"
-    foundButton = browser |> Browser.tryFindElement! (Css "#L2AGLb")
-
-    when foundButton is
-        Found button ->
-            buttonText = button |> Element.getText!
-            Stdout.line "Button found. Button text is: $(buttonText)"
-
-        NotFound ->
-            Stdout.line "Button not found!"
+test2 = test "use repl" \browser ->
+    # go to roc-lang.org
+    browser |> Browser.navigateTo! "http://roc-lang.org"
+    # find repl input
+    replInput = browser |> Browser.findElement! (Css "#source-input")
+    # send keys to repl
+    replInput |> Element.sendKeys! "1 + 2{enter}"
+    # wait for demo purpose
+    Sleep.millis! 2000
+    # find repl output element
+    outputEl = browser |> Browser.findElement! (Css ".output")
+    # get output text
+    outputText = outputEl |> Element.getText!
+    # assert text - fail for demo purpose
+    outputText |> Assert.shouldBe "3.000000001 : Num *"

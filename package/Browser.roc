@@ -7,6 +7,7 @@ module [
     close,
     runWithCleanup,
     findElement,
+    findElements,
     tryFindElement,
 ]
 
@@ -86,6 +87,21 @@ findElement = \browser, locator ->
                     e -> toWebDriverError e
 
     Internal.packElementData { sessionId, serverUrl, elementId } |> Task.ok
+
+findElements : Browser, LocatorStrategy -> Task (List Element) R2EError
+findElements = \browser, locator ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+
+    elementIds =
+        WebDriver.findElements serverUrl sessionId locator
+            |> Task.mapErr! toWebDriverError
+
+    elements =
+        elementIds
+        |> List.map \elementId ->
+            Internal.packElementData { sessionId, serverUrl, elementId }
+
+    elements |> Task.ok
 
 tryFindElement : Browser, LocatorStrategy -> Task [Found Element, NotFound] R2EError
 tryFindElement = \browser, locator ->

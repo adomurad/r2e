@@ -3,10 +3,12 @@ module [
     startSession,
     deleteSession,
     findElement,
+    findElements,
     getElementText,
     clickElement,
     navigateTo,
     getLocator,
+    sendKeys,
     LocatorStrategy,
 ]
 
@@ -112,6 +114,25 @@ findElement = \host, sessionId, locator ->
 
     Task.ok result.value.element606611e4a52e4f735466cecf
 
+FindElementsResponse : {
+    value : List {
+        element606611e4a52e4f735466cecf : Str,
+    },
+}
+
+findElements : Str, Str, LocatorStrategy -> Task.Task (List Str) _
+findElements = \host, sessionId, locator ->
+    (locatoryStrategy, locatorValue) = getLocator locator
+
+    request : Task.Task FindElementsResponse _
+    request = sendCommand host Post "/session/$(sessionId)/elements" "{\"using\": \"$(locatoryStrategy)\", \"value\": \"$(locatorValue)\"}"
+
+    result = request!
+
+    elementList = result.value |> List.map .element606611e4a52e4f735466cecf
+
+    Task.ok elementList
+
 clickElement : Str, Str, Str -> Task.Task {} _
 clickElement = \host, sessionId, elementId ->
     request : Task.Task {} _
@@ -133,6 +154,15 @@ getElementText = \host, sessionId, elementId ->
     result = request!
 
     Task.ok result.value
+
+sendKeys : Str, Str, Str, Str -> Task.Task {} _
+sendKeys = \host, sessionId, elementId, str ->
+    request : Task.Task {} _
+    request = sendCommand host Post "/session/$(sessionId)/element/$(elementId)/value" "{\"text\": \"$(str)\"}"
+
+    _ = request!
+
+    Task.ok {}
 
 sendCommand = \host, method, path, body ->
     bodyObj = body |> Str.toUtf8
