@@ -66,7 +66,7 @@ __WARNING: This package is importing modules from platform!__ - this will be blo
 
 For now - it just works...
 
-To run examples in [./examples]() you need a running webdriver (msedgedrive, chromedrive, geckodriver, etc.)
+To run examples in [examples]() you need a running webdriver (msedgedrive, chromedrive, geckodriver, etc.)
 
 Make sure that the webdriver has the same version as your browser. e.g. when using chromedriver 120, your chrome also has to be chrome 120.
 
@@ -80,7 +80,7 @@ Waiting for `module params`.
 
 ### WebDriver Client
 
-The [WebDriver.roc](./src//WebDriver.roc) module is a thin http client wrapper for webdriver, and I try to stick to the [W3C Specification](https://www.w3.org/TR/webdriver2/).
+The [WebDriver.roc](package/WebDriver.roc) module is a thin http client wrapper for webdriver, and I try to stick to the [W3C Specification](https://www.w3.org/TR/webdriver2/).
 
 It might be a good idea to extract this to a separate package if it grows.
 
