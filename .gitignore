@@ -1,0 +1,9 @@
+driver/
+examples/*
+!examples/*.*
+tests/*
+!tests/*.*
+.DS_Store
+generated-docs
+
+main

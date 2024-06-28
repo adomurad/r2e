@@ -1,0 +1,30 @@
+module [
+    getText,
+    click,
+]
+
+import pf.Task
+import WebDriver
+import Internal
+import Error exposing [toWebDriverError]
+
+# ----------------------------------------------------------------
+
+getText : Internal.Element -> Task.Task Str [WebDriverError Str]
+getText = \element ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+
+    text =
+        WebDriver.getElementText serverUrl sessionId elementId
+            |> Task.mapErr! toWebDriverError
+
+    text |> Task.ok
+
+click : Internal.Element -> Task.Task {} [WebDriverError Str]
+click = \element ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+    WebDriver.clickElement serverUrl sessionId elementId
+        |> Task.mapErr! toWebDriverError
+
+    {} |> Task.ok
+
