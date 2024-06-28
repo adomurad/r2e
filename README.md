@@ -6,6 +6,13 @@ Roc2End is a toy End2End framework.
 
 ### E2E testing
 
+The `test` wrapper will make sure to cleanup after test and when they fail.
+
+There is no way (yet) to run a list of tests - compiler bug.
+
+TODO: This will be able to generate a test report in most popular formats.
+
+
 ```elixir
 test1 = test "go to google and click some stuff" \browser ->
     # open the page http://google.com in browser
@@ -26,6 +33,10 @@ test1 = test "go to google and click some stuff" \browser ->
 ```
 
 ### Web crawling
+
+You can control the browser outside of tests.
+
+You can open multiple browser windows, etc.
 
 ```elixir
 main =
@@ -60,6 +71,12 @@ To run examples in [./examples]() you need a running webdriver (msedgedrive, chr
 Make sure that the webdriver has the same version as your browser. e.g. when using chromedriver 120, your chrome also has to be chrome 120.
 
 ## TODO
+
+### Docs
+
+There are no docs and doc-comments yet - `roc docs` won't generate docs for a `package` that is importing a `platform`.
+
+Waiting for `module params`.
 
 ### WebDriver Client
 
