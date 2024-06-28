@@ -66,7 +66,7 @@ __WARNING: This package is importing modules from platform!__ - this will be blo
 
 For now - it just works...
 
-To run examples in [examples]() you need a running webdriver (msedgedrive, chromedrive, geckodriver, etc.)
+To run examples in [examples/]() you need a running webdriver (msedgedrive, chromedrive, geckodriver, etc.)
 
 Make sure that the webdriver has the same version as your browser. e.g. when using chromedriver 120, your chrome also has to be chrome 120.
 
