@@ -1,39 +1,80 @@
-module [test, runTest, printResults, runAllTests]
+## `Test` module contains function to create and run tests.
+## This module is used in the _"e2e framework mode"_.
+module [test, customTest, runTest, printResults, runAllTests]
 
 import pf.Task exposing [Task]
 import pf.Stdout
 import Browser
 import Driver
+import Internal exposing [Browser, Driver]
 
-# TestBody : Task {} [ErrorMsg Str]
-# TestBody a : Task {} a
+TestBodySafe : Task {} [ErrorMsg Str]
 
-# TestDefinition := {
-#     name : Str,
-#     testBody : TestBody,
-# }
+TestBody a : Task {} [AssertionError Str, Custom Str, WebDriverError Str]a where a implements Inspect
 
-# test : Str, (Browser -> TestBody) -> TestDefinition
+TestDefinition := {
+    name : Str,
+    testBody : TestBodySafe,
+}
+
+## Create a r2e test with basic `Driver` configuration
+## - targeting "http://localhost:9515"
+##
+## ```
+## myTest = test "open roc-lang.org website" \browser ->
+##     # open roc-lang.org
+##     browser |> Browser.navigateTo! "http://roc-lang.org"
+## ```
+test : Str, (Browser -> TestBody a) -> TestDefinition where a implements Inspect
 test = \name, testBody ->
-    task =
-        driver = Driver.create LocalServerWithDefaultPort
-        Browser.createBrowserWithCleanup! driver \browser ->
-            testBody browser
+    driver = Driver.create LocalServerWithDefaultPort
+    (customTest driver) name testBody
 
-    {
-        name,
-        testBody: task |> Task.mapErr handleTestError,
-    }
+## Create a r2e test with custom `Driver` configuration.
+##
+## ```
+## driver = Driver.create (RemoteServer "http://my.webdriver.hub.com:9515")
+## test = customTest driver
+##
+## myTest = test "open roc-lang.org website" \browser ->
+##     # open roc-lang.org
+##     browser |> Browser.navigateTo! "http://roc-lang.org"
+## ```
+customTest : Driver -> (Str, (Internal.Browser -> TestBody a) -> TestDefinition) where a implements Inspect
+customTest = \driver ->
+    testFunc : Str, (Browser -> TestBody a) -> TestDefinition where a implements Inspect
+    testFunc = \name, testBody ->
+        task =
+            Browser.createBrowserWithCleanup driver \browser ->
+                testBody browser
 
-# runTest : TestDefinition -> Task { name : Str, result : Result Str Str } *
-runTest = \{ testBody, name } ->
+        @TestDefinition {
+            name,
+            testBody: task |> Task.mapErr handleTestError,
+        }
+
+    testFunc
+
+## Run a single r2e test.
+##
+## ```
+## myTest = test "open roc-lang.org website" \browser ->
+##     # open roc-lang.org
+##     browser |> Browser.navigateTo! "http://roc-lang.org"
+##
+## main =
+##     testResult = Test.runTest! myTest
+##     Test.printResults! [testResult]
+## ```
+runTest : TestDefinition -> Task.Task { name : Str, result : Result {} [ErrorMsg Str] } *
+runTest = \@TestDefinition { testBody, name } ->
     result = testBody |> Task.result!
     Task.ok {
         name: name,
         result: result,
     }
 
-# handleTestError : or -> Result Str Str
+# handleTestError : [AssertionError Str, WebDriverError Str]a -> [ErrorMsg Str] where a implements Inspect
 handleTestError = \result ->
     when result is
         WebDriverError msg ->
@@ -53,6 +94,17 @@ color = {
     end: "\u(001b)[0m",
 }
 
+## Print r2e test results to Stdout.
+##
+## ```
+## myTest = test "open roc-lang.org website" \browser ->
+##     # open roc-lang.org
+##     browser |> Browser.navigateTo! "http://roc-lang.org"
+##
+## main =
+##     testResults = Test.runAllTests! [myTest]
+##     Test.printResults! testResults
+## ```
 printResults : List { name : Str, result : Result {} [ErrorMsg Str] } -> Task.Task {} _
 printResults = \results ->
     Stdout.line! "Results:"
@@ -64,7 +116,18 @@ printResults = \results ->
 
     Task.seq tasks |> Task.map \_ -> {}
 
-runAllTests : List { name : a, testBody : Task.Task ok err }* -> Task.Task (List { name : a, result : Result ok err }) *
+## Run a list of r2e tests.
+##
+## ```
+## myTest = test "open roc-lang.org website" \browser ->
+##     # open roc-lang.org
+##     browser |> Browser.navigateTo! "http://roc-lang.org"
+##
+## main =
+##     testResults = Test.runAllTests! [myTest]
+##     Test.printResults! testResults
+## ```
+runAllTests : List TestDefinition -> Task.Task (List { name : Str, result : Result {} [ErrorMsg Str] }) *
 runAllTests = \tasks ->
     # Task.seq and Task.forEach do not work for this - compiler bug
     (_, allResults) = Task.loop! (tasks, []) \(remaingTests, results) ->
@@ -76,3 +139,4 @@ runAllTests = \tasks ->
                 Task.ok (Step (rest, newResults))
 
     Task.ok allResults
+

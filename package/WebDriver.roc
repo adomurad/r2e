@@ -58,7 +58,7 @@ CheckStatusResponse : {
 checkStatus : Str -> Task.Task CheckStatusResponse _
 checkStatus = \host ->
     request : Task.Task CheckStatusResponse _
-    request = sendCommand host Get "/status" ""
+    request = sendCommand host Get "/status" []
 
     result = request!
 
@@ -72,8 +72,10 @@ StartSessionResponse : {
 
 startSession : Str -> Task.Task Str _
 startSession = \host ->
+    payload = "{\"capabilities\": {}}" |> Str.toUtf8
+
     request : Task.Task StartSessionResponse _
-    request = sendCommand host Post "/session" "{\"capabilities\": {}}"
+    request = sendCommand host Post "/session" payload
 
     result = request!
 
@@ -82,7 +84,7 @@ startSession = \host ->
 deleteSession : Str, Str -> Task.Task {} _
 deleteSession = \host, sessionId ->
     request : Task.Task {} _
-    request = sendCommand host Delete "/session/$(sessionId)" ""
+    request = sendCommand host Delete "/session/$(sessionId)" []
 
     _ = request!
 
@@ -90,12 +92,19 @@ deleteSession = \host, sessionId ->
 
 navigateTo : Str, Str, Str -> Task.Task {} _
 navigateTo = \host, sessionId, url ->
+    payload = "{\"url\": \"$(url)\"}" |> Str.toUtf8
+
     request : Task.Task {} _
-    request = sendCommand host Post "/session/$(sessionId)/url" "{\"url\": \"$(url)\"}"
+    request = sendCommand host Post "/session/$(sessionId)/url" payload
 
     _ = request!
 
     Task.ok {}
+
+FindElementPayload : {
+    using : Str,
+    value : Str,
+}
 
 FindElementResponse : {
     value : {
@@ -105,10 +114,18 @@ FindElementResponse : {
 
 findElement : Str, Str, LocatorStrategy -> Task.Task Str _
 findElement = \host, sessionId, locator ->
-    (locatoryStrategy, locatorValue) = getLocator locator
+    (locatorStrategy, locatorValue) = getLocator locator
+
+    payloadObj : FindElementPayload
+    payloadObj = {
+        using: locatorStrategy,
+        value: locatorValue,
+    }
+
+    payload = Encode.toBytes payloadObj Json.utf8
 
     request : Task.Task FindElementResponse _
-    request = sendCommand host Post "/session/$(sessionId)/element" "{\"using\": \"$(locatoryStrategy)\", \"value\": \"$(locatorValue)\"}"
+    request = sendCommand host Post "/session/$(sessionId)/element" payload
 
     result = request!
 
@@ -122,10 +139,18 @@ FindElementsResponse : {
 
 findElements : Str, Str, LocatorStrategy -> Task.Task (List Str) _
 findElements = \host, sessionId, locator ->
-    (locatoryStrategy, locatorValue) = getLocator locator
+    (locatorStrategy, locatorValue) = getLocator locator
+
+    payloadObj : FindElementPayload
+    payloadObj = {
+        using: locatorStrategy,
+        value: locatorValue,
+    }
+
+    payload = Encode.toBytes payloadObj Json.utf8
 
     request : Task.Task FindElementsResponse _
-    request = sendCommand host Post "/session/$(sessionId)/elements" "{\"using\": \"$(locatoryStrategy)\", \"value\": \"$(locatorValue)\"}"
+    request = sendCommand host Post "/session/$(sessionId)/elements" payload
 
     result = request!
 
@@ -135,8 +160,10 @@ findElements = \host, sessionId, locator ->
 
 clickElement : Str, Str, Str -> Task.Task {} _
 clickElement = \host, sessionId, elementId ->
+    payload = "{}" |> Str.toUtf8
+
     request : Task.Task {} _
-    request = sendCommand host Post "/session/$(sessionId)/element/$(elementId)/click" "{}"
+    request = sendCommand host Post "/session/$(sessionId)/element/$(elementId)/click" payload
 
     _ = request!
 
@@ -149,23 +176,36 @@ GetElementTextResponse : {
 getElementText : Str, Str, Str -> Task.Task Str _
 getElementText = \host, sessionId, elementId ->
     request : Task.Task GetElementTextResponse _
-    request = sendCommand host Get "/session/$(sessionId)/element/$(elementId)/text" ""
+    request = sendCommand host Get "/session/$(sessionId)/element/$(elementId)/text" []
 
     result = request!
 
     Task.ok result.value
 
+# SendKeysPayload : {
+#     text : Str,
+# }
+
 sendKeys : Str, Str, Str, Str -> Task.Task {} _
 sendKeys = \host, sessionId, elementId, str ->
+    # payloadObj : SendKeysPayload
+    # payloadObj = {
+    #     text: str,
+    # }
+
+    # do not escape - codes like "\\uE007" will not work
+    # TODO
+    payload = "{\"text\":\"$(str)\"}" |> Str.toUtf8
+
     request : Task.Task {} _
-    request = sendCommand host Post "/session/$(sessionId)/element/$(elementId)/value" "{\"text\": \"$(str)\"}"
+    request = sendCommand host Post "/session/$(sessionId)/element/$(elementId)/value" payload
 
     _ = request!
 
     Task.ok {}
 
 sendCommand = \host, method, path, body ->
-    bodyObj = body |> Str.toUtf8
+    # bodyObj = body |> Str.toUtf8
     headers = [
         Http.header "Content-Type" "application/json",
     ]
@@ -174,7 +214,7 @@ sendCommand = \host, method, path, body ->
         { Http.defaultRequest &
             url: "$(host)$(path)",
             method,
-            body: bodyObj,
+            body: body,
             headers,
         }
         |> Http.send

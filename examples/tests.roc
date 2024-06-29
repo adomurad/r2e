@@ -63,3 +63,4 @@ test2 = test "use repl" \browser ->
     outputText = outputEl |> Element.getText!
     # assert text - fail for demo purpose
     outputText |> Assert.shouldBe "0.3000000001 : Frac *"
+

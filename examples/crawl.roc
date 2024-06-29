@@ -11,6 +11,12 @@ import r2e.Element
 import r2e.Driver
 
 main =
+    test1!
+    test2!
+    test3!
+
+test1 =
+    Stdout.line! ">> Create driver - basic usage"
     # create a driver client for http://localhost:9515
     driver = Driver.create LocalServerWithDefaultPort
 
@@ -27,4 +33,31 @@ main =
     button |> Element.click!
     # close the browser
     browser |> Browser.close!
+    Stdout.line! "<< Create driver - basic usage END"
 
+test2 =
+    Stdout.line! ">> Browser.createBrowserWithCleanup"
+    driver = Driver.create LocalServerWithDefaultPort
+    task =
+        Browser.createBrowserWithCleanup driver \browser ->
+            browser |> Browser.navigateTo! "http://google.com"
+            # should cleanup and close the browser
+            Task.err (RandomError)
+    _ = task |> Task.result!
+    # ignore errors
+    Stdout.line! "<< Browser.createBrowserWithCleanup END"
+
+test3 =
+    Stdout.line! ">> Browser.openWithCleanup"
+    driver = Driver.create LocalServerWithDefaultPort
+    task =
+        url = "http://google.com"
+        Browser.openWithCleanup! driver url \browser ->
+            # browser opens at google.com
+            # should cleanup and close the browser when not found
+            _ = browser |> Browser.findElement! (Css "#fake-id-abcd")
+            Stdout.line! "unreachable"
+
+    _ = task |> Task.result!
+    # ignore errors
+    Stdout.line! "<< Browser.openWithCleanup END"

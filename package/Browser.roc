@@ -1,3 +1,4 @@
+## `Browser` module contains function to interact with the `Browser`.
 module [
     open,
     createBrowser,
@@ -5,10 +6,11 @@ module [
     navigateTo,
     openWithCleanup,
     close,
-    runWithCleanup,
+    # runWithCleanup,
     findElement,
     findElements,
     tryFindElement,
+    Locator,
 ]
 
 import pf.Task exposing [Task]
@@ -18,6 +20,14 @@ import Error exposing [toWebDriverError, R2EError]
 
 # ----------------------------------------------------------------
 
+## Open a new browser window and navigate to the given URL.
+##
+## ```
+## # create a driver client for http://localhost:9515
+## driver = Driver.create LocalServerWithDefaultPort
+## # create browser and open the page http://google.com
+## browser = Browser.open! driver "http://google.com"
+## ```
 open : Driver, Str -> Task Browser R2EError
 open = \driver, url ->
     { serverUrl } = Internal.unpackDriverData driver
@@ -30,6 +40,31 @@ open = \driver, url ->
 
     Internal.packBrowserData { sessionId, serverUrl } |> Task.ok
 
+## Open a new browser window and navigates to the given URL
+## with a callback function.
+## When the callback function ends on `Task.ok` or `Task.err`
+## the browser window will be automatically closed.
+##
+## ```
+## url = "http://google.com"
+## Browser.openWithCleanup! driver url \browser ->
+##     # browser opens at google.com
+##     # should cleanup and close the browser when not found
+##     el = browser |> Browser.findElement! (Css "#fake-id-abcd")
+## ```
+openWithCleanup : Driver, Str, (Browser -> Task {} _) -> Task {} _
+openWithCleanup = \driver, url, task ->
+    browser = open! driver url
+    runWithCleanup browser task
+
+## Open a new browser window on a blank page.
+##
+## ```
+## # create a driver client for http://localhost:9515
+## driver = Driver.create LocalServerWithDefaultPort
+## # open empty browser
+## browser = Browser.createBrowser! driver
+## ```
 createBrowser : Driver -> Task Browser R2EError
 createBrowser = \driver ->
     { serverUrl } = Internal.unpackDriverData driver
@@ -40,11 +75,31 @@ createBrowser = \driver ->
 
     Internal.packBrowserData { sessionId, serverUrl } |> Task.ok
 
+## Open a new browser window with a callback function.
+## When the callback function ends on `Task.ok` or `Task.err`
+## the browser window will be automatically closed.
+##
+## ```
+## Browser.createBrowserWithCleanup driver \browser ->
+##     browser |> Browser.navigateTo! "http://google.com"
+##     # should cleanup and close the browser
+## Task.err (RandomError)
+## ```
 createBrowserWithCleanup : Driver, (Browser -> Task {} _) -> Task {} _
 createBrowserWithCleanup = \driver, task ->
     browser = createBrowser! driver
     runWithCleanup browser task
 
+## Navigate the browser to the given URL.
+##
+## ```
+## # create a driver client for http://localhost:9515
+## driver = Driver.create LocalServerWithDefaultPort
+## # open empty browser
+## browser = Browser.createBrowser! driver
+## # open google.com
+## browser |> Browser.navigateTo! "http://google.com"
+## ```
 navigateTo : Browser, Str -> Task {} R2EError
 navigateTo = \browser, url ->
     { serverUrl, sessionId } = Internal.unpackBrowserData browser
@@ -53,11 +108,16 @@ navigateTo = \browser, url ->
 
     {} |> Task.ok
 
-openWithCleanup : Driver, Str, (Browser -> Task {} _) -> Task {} _
-openWithCleanup = \driver, url, task ->
-    browser = open! driver url
-    runWithCleanup browser task
-
+## Close the browser window.
+##
+## ```
+## # create a driver client for http://localhost:9515
+## driver = Driver.create LocalServerWithDefaultPort
+## # create browser and open the page http://google.com
+## browser = Browser.open! driver "http://google.com"
+## # close the browser
+## browser |> Browser.close!
+## ```
 close : Browser -> Task {} R2EError
 close = \browser ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
@@ -66,34 +126,94 @@ close = \browser ->
 
     {} |> Task.ok
 
+# internal
 runWithCleanup : Browser, (Browser -> Task a _) -> Task a _
 runWithCleanup = \browser, task ->
     result = task browser |> Task.result!
     browser |> Browser.close!
     result |> Task.fromResult
 
-findElement : Browser, LocatorStrategy -> Task Element R2EError
+## Supported locator strategies
+##
+## `Css Str` - e.g. Css ".my-button-class"
+##
+## `TestId Str` - e.g. TestId "button" => Css "[data-testid=\"button\"]"
+##
+## `XPath Str` - e.g. XPath "/bookstore/book[price>35]/price"
+##
+Locator : [
+    Css Str,
+    TestId Str,
+    XPath Str,
+]
+
+getDriverLocator : Locator -> LocatorStrategy
+getDriverLocator = \locator ->
+    when locator is
+        Css str -> Css str
+        TestId str -> Css "[data-testid=\"$(str)\"]"
+        XPath str -> XPath str
+
+## Find a `Element` in the `Browser`.
+##
+## When there are more than 1 elements, then the first will
+## be returned.
+##
+## See supported locators at `Locator`.
+##
+## ```
+## # find the html element with a css selector "#my-id"
+## button = browser |> Browser.findElement! (Css "#my-id")
+## ```
+##
+## ```
+## # find the html element with a css selector ".my-class"
+## button = browser |> Browser.findElement! (Css ".my-class")
+## ```
+##
+## ```
+## # find the html element with an attribute [data-testid="my-element"]
+## button = browser |> Browser.findElement! (TestId "my-element")
+## ```
+findElement : Browser, Locator -> Task Element R2EError
 findElement = \browser, locator ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
 
+    driverLocator = getDriverLocator locator
+
     elementId =
-        WebDriver.findElement serverUrl sessionId locator
+        WebDriver.findElement serverUrl sessionId driverLocator
             |> Task.mapErr! \err ->
                 when err is
                     HttpErr (BadStatus 404) ->
-                        (_, locatorValue) = WebDriver.getLocator locator
+                        (_, locatorValue) = WebDriver.getLocator driverLocator
                         WebDriverError "element ($(locatorValue)) not found"
 
                     e -> toWebDriverError e
 
     Internal.packElementData { sessionId, serverUrl, elementId } |> Task.ok
 
-findElements : Browser, LocatorStrategy -> Task (List Element) R2EError
+# TODO add findSingleElement - error when not exact 1 element
+
+## Find all `Elements` in the `Browser`.
+##
+## When there are no elements found, then the list will be empty.
+##
+## See supported locators at `Locator`.
+##
+## ```
+## # find all <li> elements in #my-list
+## listItems = browser |> Browser.findElements! (Css "#my-list li")
+## ```
+##
+findElements : Browser, Locator -> Task (List Element) R2EError
 findElements = \browser, locator ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
 
+    driverLocator = getDriverLocator locator
+
     elementIds =
-        WebDriver.findElements serverUrl sessionId locator
+        WebDriver.findElements serverUrl sessionId driverLocator
             |> Task.mapErr! toWebDriverError
 
     elements =
@@ -103,11 +223,28 @@ findElements = \browser, locator ->
 
     elements |> Task.ok
 
-tryFindElement : Browser, LocatorStrategy -> Task [Found Element, NotFound] R2EError
+## Find a `Element` in the `Browser`.
+##
+## This function returns a `[Found Element, NotFound]` instead of an error
+## when element is not found.
+##
+## When there are more than 1 elements, then the first will
+## be returned.
+##
+## See supported locators at `Locator`.
+##
+## ```
+## # find the html element with a css selector "#my-id"
+## button = browser |> Browser.findElement! (Css "#my-id")
+## ```
+##
+tryFindElement : Browser, Locator -> Task [Found Element, NotFound] R2EError
 tryFindElement = \browser, locator ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
 
-    result = WebDriver.findElement serverUrl sessionId locator |> Task.result!
+    driverLocator = getDriverLocator locator
+
+    result = WebDriver.findElement serverUrl sessionId driverLocator |> Task.result!
 
     when result is
         Ok elementId ->
