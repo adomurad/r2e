@@ -14,6 +14,9 @@ module [
     LocatorStrategy,
     getWindowTitle,
     getUrl,
+    navigateBack,
+    navigateForward,
+    reloadPage,
 ]
 
 # import pf.Stdout
@@ -279,6 +282,41 @@ getUrl = \host, sessionId ->
     result = request!
 
     Task.ok result.value
+
+navigateBack : Str, Str -> Task.Task {} _
+navigateBack = \host, sessionId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task {} _
+    request = sendCommand host Post "/session/$(sessionId)/back" payload
+
+    _ = request!
+
+    Task.ok {}
+
+navigateForward : Str, Str -> Task.Task {} _
+navigateForward = \host, sessionId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task {} _
+    request = sendCommand host Post "/session/$(sessionId)/forward" payload
+
+    _ = request!
+
+    Task.ok {}
+
+reloadPage : Str, Str -> Task.Task {} _
+reloadPage = \host, sessionId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task {} _
+    request = sendCommand host Post "/session/$(sessionId)/refresh" payload
+
+    _ = request!
+
+    Task.ok {}
+
+# ---------------------------------
 
 sendCommand = \host, method, path, body ->
     # bodyObj = body |> Str.toUtf8

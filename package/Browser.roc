@@ -16,6 +16,9 @@ module [
     moveTo,
     getTitle,
     getUrl,
+    navigateBack,
+    navigateForward,
+    reloadPage,
 ]
 
 import pf.Task exposing [Task]
@@ -360,4 +363,46 @@ getUrl = \browser ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
     WebDriver.getUrl serverUrl sessionId
         |> Task.mapErr! toWebDriverError
+
+## Navigate back in the browser history.
+##
+## ```
+## browser |> Browser.navigateBack!
+## ```
+navigateBack : Browser -> Task.Task {} [WebDriverError Str]
+navigateBack = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    _ =
+        WebDriver.navigateBack serverUrl sessionId
+            |> Task.mapErr! toWebDriverError
+
+    Task.ok {}
+
+## Navigate forward in the browser history.
+##
+## ```
+## browser |> Browser.navigateForward!
+## ```
+navigateForward : Browser -> Task.Task {} [WebDriverError Str]
+navigateForward = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    _ =
+        WebDriver.navigateForward serverUrl sessionId
+            |> Task.mapErr! toWebDriverError
+
+    Task.ok {}
+
+## Reload the current page.
+##
+## ```
+## browser |> Browser.reloadPage!
+## ```
+reloadPage : Browser -> Task.Task {} [WebDriverError Str]
+reloadPage = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    _ =
+        WebDriver.reloadPage serverUrl sessionId
+            |> Task.mapErr! toWebDriverError
+
+    Task.ok {}
 

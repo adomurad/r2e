@@ -13,7 +13,7 @@ import r2e.Assert
 
 main : Task.Task {} _
 main =
-    tests = [test1, test2, test3, test4, test5, test6, test7, test8]
+    tests = [test1, test2, test3, test4, test5, test6, test7, test8, test9, test10]
 
     results = Test.runAllTests! tests
     Test.printResults! results
@@ -68,6 +68,22 @@ test7 = test "Get title" \browser ->
     title |> Assert.shouldBe "Google"
 
 test8 = test "Get url" \browser ->
-    browser |> Browser.navigateTo! "http://google.com"
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
     url = browser |> Browser.getUrl!
-    url |> Assert.shouldBe "https://google.com/"
+    url |> Assert.shouldBe "https://devexpress.github.io/testcafe/example/"
+
+test9 = test "Navigate back and forth" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    browser |> Assert.urlShouldBe! "https://devexpress.github.io/testcafe/example/"
+    browser |> Browser.navigateTo! "https://roc-lang.org"
+    browser |> Assert.urlShouldBe! "https://www.roc-lang.org/"
+    browser |> Browser.navigateBack!
+    browser |> Assert.urlShouldBe! "https://devexpress.github.io/testcafe/example/"
+    browser |> Browser.navigateForward!
+    browser |> Assert.urlShouldBe! "https://www.roc-lang.org/"
+
+test10 = test "Reload page and assert title" \browser ->
+    browser |> Browser.navigateTo! "http://google.com"
+    browser |> Assert.titleShouldBe! "Google"
+    browser |> Browser.reloadPage!
+    browser |> Assert.titleShouldBe! "Google"
