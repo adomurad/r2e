@@ -13,7 +13,7 @@ import r2e.Assert
 
 main : Task.Task {} _
 main =
-    tests = [test1, test2, test3, test4, test5, test6, test7]
+    tests = [test1, test2, test3, test4, test5, test6, test7, test8]
 
     results = Test.runAllTests! tests
     Test.printResults! results
@@ -66,3 +66,8 @@ test7 = test "Get title" \browser ->
     browser |> Browser.navigateTo! "http://google.com"
     title = browser |> Browser.getTitle!
     title |> Assert.shouldBe "Google"
+
+test8 = test "Get url" \browser ->
+    browser |> Browser.navigateTo! "http://google.com"
+    url = browser |> Browser.getUrl!
+    url |> Assert.shouldBe "https://google.com/"

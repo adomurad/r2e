@@ -15,6 +15,7 @@ module [
     setSize,
     moveTo,
     getTitle,
+    getUrl,
 ]
 
 import pf.Task exposing [Task]
@@ -344,5 +345,19 @@ getTitle : Browser -> Task.Task Str [WebDriverError Str]
 getTitle = \browser ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
     WebDriver.getWindowTitle serverUrl sessionId
+        |> Task.mapErr! toWebDriverError
+
+## Get current URL.
+##
+## ```
+## browser |> Browser.navigateTo! "http://google.com"
+## # get url
+## url = browser |> Browser.getUrl!
+## # url = "https://google.com/"
+## ```
+getUrl : Browser -> Task.Task Str [WebDriverError Str]
+getUrl = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    WebDriver.getUrl serverUrl sessionId
         |> Task.mapErr! toWebDriverError
 

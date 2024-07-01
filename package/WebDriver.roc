@@ -13,6 +13,7 @@ module [
     SetWindowRectPayload,
     LocatorStrategy,
     getWindowTitle,
+    getUrl,
 ]
 
 # import pf.Stdout
@@ -261,6 +262,19 @@ getWindowTitle : Str, Str -> Task.Task Str _
 getWindowTitle = \host, sessionId ->
     request : Task.Task GetWindowTitleResponse _
     request = sendCommand host Get "/session/$(sessionId)/title" []
+
+    result = request!
+
+    Task.ok result.value
+
+GetUrlResponse : {
+    value : Str,
+}
+
+getUrl : Str, Str -> Task.Task Str _
+getUrl = \host, sessionId ->
+    request : Task.Task GetUrlResponse _
+    request = sendCommand host Get "/session/$(sessionId)/url" []
 
     result = request!
 
