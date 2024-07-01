@@ -13,7 +13,20 @@ import r2e.Assert
 
 main : Task.Task {} _
 main =
-    tests = [test1, test2, test3, test4, test5, test6, test7, test8, test9, test10]
+    tests = [
+        test1,
+        test2,
+        test3,
+        test4,
+        test5,
+        test6,
+        test7,
+        test8,
+        test9,
+        test10,
+        test11,
+        test12,
+    ]
 
     results = Test.runAllTests! tests
     Test.printResults! results
@@ -87,3 +100,21 @@ test10 = test "Reload page and assert title" \browser ->
     browser |> Assert.titleShouldBe! "Google"
     browser |> Browser.reloadPage!
     browser |> Assert.titleShouldBe! "Google"
+
+test11 = test "Maximize, minimize, go full screen" \browser ->
+    browser |> Browser.navigateTo! "http://google.com"
+    { width } = browser |> Browser.maximizeWindow!
+    width |> Assert.shouldBeGreaterThan! 0
+    browser |> Browser.minimizeWindow!
+    _ = browser |> Browser.fullScreenWindow!
+    Task.ok {}
+
+test12 = test "Asserts" \_ ->
+    1 |> Assert.shouldBeGreaterThan! 0
+    1 |> Assert.shouldBeGreaterOrEqualTo! 1
+    2 |> Assert.shouldBeGreaterOrEqualTo! 1
+    4 |> Assert.shouldBeLesserThan! 5
+    5 |> Assert.shouldBeLesserOrEqualTo! 5
+    4 |> Assert.shouldBeLesserOrEqualTo! 5
+    5 |> Assert.shouldBeEqualTo! 5
+

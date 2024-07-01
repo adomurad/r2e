@@ -17,6 +17,10 @@ module [
     navigateBack,
     navigateForward,
     reloadPage,
+    maximizeWindow,
+    minimizeWindow,
+    fullScreenWindow,
+    WindowRectResponseValue,
 ]
 
 # import pf.Stdout
@@ -315,6 +319,50 @@ reloadPage = \host, sessionId ->
     _ = request!
 
     Task.ok {}
+
+WindowRectResponseValue : {
+    x : I32,
+    y : I32,
+    width : I32,
+    height : I32,
+}
+
+WindowRectResponse : {
+    value : WindowRectResponseValue,
+}
+
+maximizeWindow : Str, Str -> Task.Task WindowRectResponseValue _
+maximizeWindow = \host, sessionId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task WindowRectResponse _
+    request = sendCommand host Post "/session/$(sessionId)/window/maximize" payload
+
+    response = request!
+
+    Task.ok response.value
+
+minimizeWindow : Str, Str -> Task.Task WindowRectResponseValue _
+minimizeWindow = \host, sessionId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task WindowRectResponse _
+    request = sendCommand host Post "/session/$(sessionId)/window/minimize" payload
+
+    response = request!
+
+    Task.ok response.value
+
+fullScreenWindow : Str, Str -> Task.Task WindowRectResponseValue _
+fullScreenWindow = \host, sessionId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task WindowRectResponse _
+    request = sendCommand host Post "/session/$(sessionId)/window/fullscreen" payload
+
+    response = request!
+
+    Task.ok response.value
 
 # ---------------------------------
 

@@ -19,6 +19,9 @@ module [
     navigateBack,
     navigateForward,
     reloadPage,
+    maximizeWindow,
+    minimizeWindow,
+    fullScreenWindow,
 ]
 
 import pf.Task exposing [Task]
@@ -405,4 +408,37 @@ reloadPage = \browser ->
             |> Task.mapErr! toWebDriverError
 
     Task.ok {}
+
+## Maximize the `Browser` window.
+##
+## ```
+## browser |> Browser.maximizeWindow!
+## ```
+maximizeWindow : Browser -> Task.Task WebDriver.WindowRectResponseValue [WebDriverError Str]
+maximizeWindow = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    WebDriver.maximizeWindow serverUrl sessionId
+    |> Task.mapErr toWebDriverError
+
+## Minimize the `Browser` window.
+##
+## ```
+## browser |> Browser.minimizeWindow!
+## ```
+minimizeWindow : Browser -> Task.Task WebDriver.WindowRectResponseValue [WebDriverError Str]
+minimizeWindow = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    WebDriver.minimizeWindow serverUrl sessionId
+    |> Task.mapErr toWebDriverError
+
+## Make the `Browser` window full screen.
+##
+## ```
+## browser |> Browser.fullScreenWindow!
+## ```
+fullScreenWindow : Browser -> Task.Task WebDriver.WindowRectResponseValue [WebDriverError Str]
+fullScreenWindow = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    WebDriver.fullScreenWindow serverUrl sessionId
+    |> Task.mapErr toWebDriverError
 

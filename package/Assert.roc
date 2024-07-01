@@ -2,7 +2,16 @@
 ## and data extracted from the browser.
 ##
 ## All assert function return a `Task` with the `[AssertionError Str]` error.
-module [shouldBe, urlShouldBe, titleShouldBe]
+module [
+    shouldBe,
+    urlShouldBe,
+    titleShouldBe,
+    shouldBeEqualTo,
+    shouldBeGreaterOrEqualTo,
+    shouldBeGreaterThan,
+    shouldBeLesserOrEqualTo,
+    shouldBeLesserThan,
+]
 
 import pf.Task
 import Internal exposing [Browser]
@@ -24,6 +33,76 @@ shouldBe = \actual, expected ->
         Task.ok {}
     else
         Task.err (AssertionError "Expected \"$(actual)\" to be \"$(expected)\"")
+
+## Checks if the __actual__ `Num` is equal to the __expected__.
+##
+## ```
+## 3 |> Assert.shouldBeEqualTo! 3
+## ```
+shouldBeEqualTo : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
+shouldBeEqualTo = \actual, expected ->
+    if expected == actual then
+        Task.ok {}
+    else
+        actualStr = actual |> Num.toStr
+        expectedStr = expected |> Num.toStr
+        Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to \"$(expectedStr)\"")
+
+## Checks if the __actual__ `Num` is grater than the __expected__.
+##
+## ```
+## 3 |> Assert.shouldBeGreaterThan! 2
+## ```
+shouldBeGreaterThan : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
+shouldBeGreaterThan = \actual, expected ->
+    if actual > expected then
+        Task.ok {}
+    else
+        actualStr = actual |> Num.toStr
+        expectedStr = expected |> Num.toStr
+        Task.err (AssertionError "Expected \"$(actualStr)\" to be greater than \"$(expectedStr)\"")
+
+## Checks if the __actual__ `Num` is grater or equal than the __expected__.
+##
+## ```
+## 3 |> Assert.shouldBeGreaterOrEqualTo! 2
+## ```
+shouldBeGreaterOrEqualTo : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
+shouldBeGreaterOrEqualTo = \actual, expected ->
+    if actual >= expected then
+        Task.ok {}
+    else
+        actualStr = actual |> Num.toStr
+        expectedStr = expected |> Num.toStr
+        Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to or greater than \"$(expectedStr)\"")
+
+## Checks if the __actual__ `Num` is grater than the __expected__.
+##
+## ```
+## 3 |> Assert.shouldBeGreaterThan! 2
+## ```
+shouldBeLesserThan : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
+shouldBeLesserThan = \actual, expected ->
+    if actual < expected then
+        Task.ok {}
+    else
+        actualStr = actual |> Num.toStr
+        expectedStr = expected |> Num.toStr
+        Task.err (AssertionError "Expected \"$(actualStr)\" to be lesser than \"$(expectedStr)\"")
+
+## Checks if the __actual__ `Num` is grater or equal than the __expected__.
+##
+## ```
+## 3 |> Assert.shouldBeLesserOrEqualTo! 2
+## ```
+shouldBeLesserOrEqualTo : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
+shouldBeLesserOrEqualTo = \actual, expected ->
+    if actual <= expected then
+        Task.ok {}
+    else
+        actualStr = actual |> Num.toStr
+        expectedStr = expected |> Num.toStr
+        Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to or lesser than \"$(expectedStr)\"")
 
 ## Checks if the __URL__ is equal to the __expected__.
 ##
