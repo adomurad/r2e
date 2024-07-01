@@ -1,6 +1,6 @@
 ## `Test` module contains function to create and run tests.
 ## This module is used in the _"e2e framework mode"_.
-module [test, customTest, runTest, printResults, runAllTests]
+module [test, customTest, runTest, printResults, runAllTests, getResultCode]
 
 import pf.Task exposing [Task]
 import pf.Stdout
@@ -113,8 +113,22 @@ printResults = \results ->
         when res.result is
             Ok {} -> Stdout.line "$(color.gray)Test $(index):$(color.end) \"$(res.name)\": $(color.green)OK$(color.end)"
             Err (ErrorMsg e) -> Stdout.line "$(color.gray)Test $(index):$(color.end) \"$(res.name)\": $(color.red)$(e)$(color.end)"
+    Task.seq (tasks |> List.reverse) |> Task.map! \_ -> {}
+    # empty line
+    Stdout.line! ""
 
-    Task.seq tasks |> Task.map \_ -> {}
+    totalCount = results |> List.len
+    errorCount = results |> List.countIf \{ result } -> result |> Result.isErr
+    successCount = totalCount - errorCount
+    totalCountStr = totalCount |> Num.toStr
+    errorCountStr = errorCount |> Num.toStr
+    successCountStr = successCount |> Num.toStr
+
+    msg = "Total:\t$(totalCountStr)\nPass:\t$(successCountStr)\nFail:\t$(errorCountStr)"
+    if errorCount > 0 then
+        Stdout.line "$(color.red)$(msg)$(color.end)"
+    else
+        Stdout.line "$(color.green)$(msg)$(color.end)"
 
 ## Run a list of r2e tests.
 ##
@@ -130,8 +144,8 @@ printResults = \results ->
 runAllTests : List TestDefinition -> Task.Task (List { name : Str, result : Result {} [ErrorMsg Str] }) *
 runAllTests = \tasks ->
     # Task.seq and Task.forEach do not work for this - compiler bug
-    (_, allResults) = Task.loop! (tasks, []) \(remaingTests, results) ->
-        when remaingTests is
+    (_, allResults) = Task.loop! (tasks, []) \(remainingTests, results) ->
+        when remainingTests is
             [] -> Task.ok (Done ([], results))
             [task, .. as rest] ->
                 result = task |> Test.runTest!
@@ -140,3 +154,32 @@ runAllTests = \tasks ->
 
     Task.ok allResults
 
+## Get the result code.
+##
+## You can return this code from the `main` function
+## to indicate to the running CI process if the
+## test run was a success or a failure.
+##
+## ```
+## main =
+##     Stdout.line! "Starting test suite!"
+##
+##     tasks = [test1, test2]
+##
+##     # run all tests
+##     results = Test.runAllTests! tasks
+##     # print results to Stdout
+##     Test.printResults! results
+##     # return an exit code for the cli
+##     results |> Test.getResultCode
+## ```
+getResultCode : List { name : Str, result : Result {} [ErrorMsg Str] } -> Task.Task {} [Exit I32 Str]
+getResultCode = \results ->
+    anyFailures =
+        results
+        |> List.any \{ result } -> result |> Result.isErr
+
+    if anyFailures then
+        Task.err (Exit 1 "Test run failed")
+    else
+        Task.ok {}
