@@ -11,6 +11,9 @@ module [
     findElements,
     tryFindElement,
     Locator,
+    setWindowRect,
+    setSize,
+    moveTo,
 ]
 
 import pf.Task exposing [Task]
@@ -256,3 +259,69 @@ tryFindElement = \browser, locator ->
         Err err ->
             err |> toWebDriverError |> Task.err
 
+## Set browser window position and size.
+##
+## `x` - x position
+## `y` - y position
+## `width` - width
+## `height` - height
+##
+## All parameters are optional.
+##
+## ```
+## browser |> Browser.setWindowRect! {
+##     x: Value 0,
+##     y: Value 0,
+## }
+## ```
+## ```
+## browser |> Browser.setWindowRect! {
+##     width: Value 100,
+##     height: Value 100,
+##     x: None,
+## }
+## ```
+setWindowRect : Browser, WebDriver.SetWindowRectPayload -> Task.Task {} [WebDriverError Str]
+setWindowRect = \browser, rect ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    _ =
+        WebDriver.setWindowRect serverUrl sessionId rect
+            |> Task.mapErr! toWebDriverError
+
+    {} |> Task.ok
+
+## Set browser window size.
+##
+## `width` - width
+## `height` - height
+##
+## ```
+## # set size 100x800
+## browser |> Browser.setSize! 100 800
+## ```
+setSize : Browser, I32, I32 -> Task.Task {} [WebDriverError Str]
+setSize = \browser, width, height ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    _ =
+        WebDriver.setWindowRect serverUrl sessionId { width: Some width, height: Some height }
+            |> Task.mapErr! toWebDriverError
+
+    {} |> Task.ok
+
+## Move the browser window to new x,y coordinates.
+##
+## `x` - x
+## `y` - y
+##
+## ```
+## # move to 100x800
+## browser |> Browser.moveTo! 100 800
+## ```
+moveTo : Browser, I32, I32 -> Task.Task {} [WebDriverError Str]
+moveTo = \browser, x, y ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+    _ =
+        WebDriver.setWindowRect serverUrl sessionId { x: Some x, y: Some y }
+            |> Task.mapErr! toWebDriverError
+
+    {} |> Task.ok

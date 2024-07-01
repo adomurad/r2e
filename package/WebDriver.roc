@@ -9,6 +9,8 @@ module [
     navigateTo,
     getLocator,
     sendKeys,
+    setWindowRect,
+    SetWindowRectPayload,
     LocatorStrategy,
 ]
 
@@ -16,6 +18,7 @@ module [
 import pf.Http
 import pf.Task
 import json.Json
+import json.OptionOrNull exposing [OptionOrNull]
 
 # ----------------------------------------------------------------
 
@@ -203,6 +206,51 @@ sendKeys = \host, sessionId, elementId, str ->
     _ = request!
 
     Task.ok {}
+
+Option a : [Some a, None]
+
+mapNullableToJson : Option a -> OptionOrNull a
+mapNullableToJson = \val ->
+    when val is
+        None -> OptionOrNull.null {}
+        Some a -> OptionOrNull.some a
+
+SetWindowRectPayload : {
+    x ? Option I32,
+    y ? Option I32,
+    width ? Option I32,
+    height ? Option I32,
+}
+
+SetWindowRectJsonPayload : {
+    x : OptionOrNull I32,
+    y : OptionOrNull I32,
+    width : OptionOrNull I32,
+    height : OptionOrNull I32,
+}
+
+SetWindowRectResponse : {
+    value : SetWindowRectJsonPayload,
+}
+
+setWindowRect : Str, Str, SetWindowRectPayload -> Task.Task SetWindowRectJsonPayload _
+setWindowRect = \host, sessionId, { x ? None, y ? None, width ? None, height ? None } ->
+    payloadObj : SetWindowRectJsonPayload
+    payloadObj = {
+        x: x |> mapNullableToJson,
+        y: y |> mapNullableToJson,
+        width: width |> mapNullableToJson,
+        height: height |> mapNullableToJson,
+    }
+
+    payload = Encode.toBytes payloadObj Json.utf8
+
+    request : Task.Task SetWindowRectResponse _
+    request = sendCommand host Post "/session/$(sessionId)/window/rect" payload
+
+    result = request!
+
+    Task.ok result.value
 
 sendCommand = \host, method, path, body ->
     # bodyObj = body |> Str.toUtf8

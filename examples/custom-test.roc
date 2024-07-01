@@ -12,7 +12,7 @@ import r2e.Element
 import r2e.Assert
 import r2e.Driver
 
-driver = Driver.create (RemoteServer "http://localhost:9515")
+driver = Driver.create { connection: RemoteServer "http://localhost:9515" }
 test = customTest driver
 
 main =

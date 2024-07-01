@@ -27,7 +27,7 @@ TestDefinition := {
 ## ```
 test : Str, (Browser -> TestBody a) -> TestDefinition where a implements Inspect
 test = \name, testBody ->
-    driver = Driver.create LocalServerWithDefaultPort
+    driver = Driver.create {}
     (customTest driver) name testBody
 
 ## Create a r2e test with custom `Driver` configuration.

@@ -5,6 +5,7 @@
 module [
     create,
     Connection,
+    DriverConfiguration,
 ]
 
 import pf.Task
@@ -13,9 +14,9 @@ import Internal
 # ----------------------------------------------------------------
 
 getDriverUrl : Connection -> Str
-getDriverUrl = \options ->
+getDriverUrl = \config ->
     # TODO port and host validation
-    when options is
+    when config is
         LocalServerWithDefaultPort -> "http://localhost:9515"
         LocalServer port ->
             portStr = port |> Num.toStr
@@ -24,6 +25,14 @@ getDriverUrl = \options ->
         RemoteServer host -> host
 
 # ----------------------------------------------------------------
+
+##  Driver configuration object
+##
+## `connection` - configure driver url, default = LocalServerWithDefaultPort
+##
+DriverConfiguration : {
+    connection ? Connection,
+}
 
 ## Connection options for the `Driver`
 ##
@@ -54,8 +63,8 @@ Connection : [
 ## driver = Driver.create (RemoteServer "http://localhost:9515")
 ## browser = Browser.open! driver "http://google.com"
 ## ```
-create : Connection -> Internal.Driver
-create = \driverConnection ->
-    serverUrl = getDriverUrl driverConnection
+create : DriverConfiguration -> Internal.Driver
+create = \{ connection ? LocalServerWithDefaultPort } ->
+    serverUrl = getDriverUrl connection
     Internal.packDriverData { serverUrl }
 

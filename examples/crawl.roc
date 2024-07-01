@@ -14,11 +14,14 @@ main =
     test1!
     test2!
     test3!
+    test4!
+    test5!
+    test6!
 
 test1 =
     Stdout.line! ">> Create driver - basic usage"
     # create a driver client for http://localhost:9515
-    driver = Driver.create LocalServerWithDefaultPort
+    driver = Driver.create {}
 
     # open the page http://google.com in browser
     browser = Browser.open! driver "http://google.com"
@@ -37,7 +40,7 @@ test1 =
 
 test2 =
     Stdout.line! ">> Browser.createBrowserWithCleanup"
-    driver = Driver.create LocalServerWithDefaultPort
+    driver = Driver.create {}
     task =
         Browser.createBrowserWithCleanup driver \browser ->
             browser |> Browser.navigateTo! "http://google.com"
@@ -49,7 +52,7 @@ test2 =
 
 test3 =
     Stdout.line! ">> Browser.openWithCleanup"
-    driver = Driver.create LocalServerWithDefaultPort
+    driver = Driver.create {}
     task =
         url = "http://google.com"
         Browser.openWithCleanup! driver url \browser ->
@@ -61,3 +64,62 @@ test3 =
     _ = task |> Task.result!
     # ignore errors
     Stdout.line! "<< Browser.openWithCleanup END"
+
+test4 =
+    Stdout.line! ">> Browser.setWindowRect"
+    # create a driver client for http://localhost:9515
+    driver = Driver.create {}
+
+    # create 2 browser windows
+    browser1 = Browser.createBrowser! driver
+    # create 2 browser windows
+    browser2 = Browser.createBrowser! driver
+    # navigate browser1 to basic-cli
+    browser1 |> Browser.navigateTo! "https://www.roc-lang.org/packages/basic-cli/"
+    # navigate browser2 to basic-webserver
+    browser2 |> Browser.navigateTo! "https://roc-lang.github.io/basic-webserver/"
+    browser1
+        |> Browser.setWindowRect! {
+            x: Some 0,
+            y: Some 0,
+        }
+    browser2
+        |> Browser.setWindowRect! {
+            width: Some 100,
+            height: Some 100,
+        }
+    # close browser1
+    browser1 |> Browser.close!
+    # close browser2
+    browser2 |> Browser.close!
+    Stdout.line! "<< Browser.setWindowRect END"
+
+test5 =
+    Stdout.line! ">> Browser.setSize"
+    # create a driver client for http://localhost:9515
+    driver = Driver.create {}
+
+    # create 2 browser windows
+    browser = Browser.createBrowser! driver
+    # navigate browser1 to basic-cli
+    browser |> Browser.navigateTo! "https://www.roc-lang.org/packages/basic-cli/"
+    # set size 100x800
+    browser |> Browser.setSize! 100 800
+    # close browser
+    browser |> Browser.close!
+    Stdout.line! "<< Browser.setSize END"
+
+test6 =
+    Stdout.line! ">> Browser.moveTo"
+    # create a driver client for http://localhost:9515
+    driver = Driver.create {}
+
+    # create 2 browser windows
+    browser = Browser.createBrowser! driver
+    # navigate browser1 to basic-cli
+    browser |> Browser.navigateTo! "https://www.roc-lang.org/packages/basic-cli/"
+    # move to 100x800
+    browser |> Browser.moveTo! 100 800
+    # close browser
+    browser |> Browser.close!
+    Stdout.line! "<< Browser.moveTo END"
