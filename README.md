@@ -2,7 +2,9 @@
 
 Roc2End is a toy End2End framework.
 
-__WARNING: This package is importing modules from platform!__ - this will be blocked in future. Waiting for `module params` to refactor this.
+[Full Documentation](https://github.com/adomurad/r2e.git)
+
+**WARNING: This package is importing modules from platform!** - this will be blocked in future. Waiting for `module params` to refactor this.
 
 So use at your own risk - sooner or later this will stop working.
 
@@ -19,7 +21,6 @@ Current implementation is minimal, and a lot of webdriver features are still mis
 The `test` wrapper will make sure to cleanup after tests when they fail.
 
 TODO: This will be able to generate a test report in most popular formats.
-
 
 ```elixir
 test1 = test "go to google and click some stuff" \browser ->
