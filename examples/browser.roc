@@ -13,7 +13,7 @@ import r2e.Assert
 
 main : Task.Task {} _
 main =
-    tests = [test1, test2, test3, test4, test5, test6]
+    tests = [test1, test2, test3, test4, test5, test6, test7]
 
     results = Test.runAllTests! tests
     Test.printResults! results
@@ -61,3 +61,8 @@ test6 = test "Find many elements" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
     optionElements = browser |> Browser.findElements! (Css "option")
     optionElements |> List.len |> Num.toStr |> Assert.shouldBe "3"
+
+test7 = test "Get title" \browser ->
+    browser |> Browser.navigateTo! "http://google.com"
+    title = browser |> Browser.getTitle!
+    title |> Assert.shouldBe "Google"
