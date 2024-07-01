@@ -2,7 +2,7 @@
 
 Roc2End is a toy End2End framework.
 
-[Full Documentation](https://github.com/adomurad/r2e.git)
+[Full Documentation](https://adomurad.github.io/r2e-docs/)
 
 **WARNING: This package is importing modules from platform!** - this will be blocked in future. Waiting for `module params` to refactor this.
 
