@@ -237,8 +237,13 @@ findElements = \browser, locator ->
 ## See supported locators at `Locator`.
 ##
 ## ```
-## # find the html element with a css selector "#my-id"
-## button = browser |> Browser.findElement! (Css "#my-id")
+## maybeButton = browser |> Browser.tryFindElement! (Css "#submit-button")
+##
+## when maybeButton is
+##     NotFound -> Stdout.line! "Button not found"
+##     Found el ->
+##         buttonText = el |> Element.getText!
+##         Stdout.line! "Button found with text: $(buttonText)"
 ## ```
 ##
 tryFindElement : Browser, Locator -> Task [Found Element, NotFound] R2EError
