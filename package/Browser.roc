@@ -22,6 +22,7 @@ module [
     maximizeWindow,
     minimizeWindow,
     fullScreenWindow,
+    printPdfBase64,
 ]
 
 import pf.Task exposing [Task]
@@ -440,5 +441,19 @@ fullScreenWindow : Browser -> Task.Task WebDriver.WindowRectResponseValue [WebDr
 fullScreenWindow = \browser ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
     WebDriver.fullScreenWindow serverUrl sessionId
+    |> Task.mapErr toWebDriverError
+
+## Print current page to PDF.
+##
+## The result will be **base64** encoded `Str`.
+##
+## ```
+## base64PdfStr = browser |> Browser.printPdfBase64! {}
+## ```
+printPdfBase64 : Browser, WebDriver.PrintPdfPayload -> Task.Task Str [WebDriverError Str]
+printPdfBase64 = \browser, options ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+
+    WebDriver.printPdf serverUrl sessionId options
     |> Task.mapErr toWebDriverError
 

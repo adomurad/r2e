@@ -50,7 +50,7 @@ You can open multiple browser windows, etc.
 ```elixir
 main =
     # create a driver client for http://localhost:9515
-    driver = Driver.create LocalServerWithDefaultPort
+    driver = Driver.create {}
 
     # open the page http://google.com in browser
     browser = Browser.open! driver "http://google.com"

@@ -21,6 +21,8 @@ module [
     minimizeWindow,
     fullScreenWindow,
     WindowRectResponseValue,
+    printPdf,
+    PrintPdfPayload,
 ]
 
 # import pf.Stdout
@@ -363,6 +365,67 @@ fullScreenWindow = \host, sessionId ->
     response = request!
 
     Task.ok response.value
+
+PageOrientation : [Landscape, Portrait]
+
+PrintPdfPayload : {
+    page ? PageDimensions,
+    margin ? PageMargins,
+    scale ? F32, # 0.1 - 2.0 - default: 1.0
+    orientation ? PageOrientation, # default: portrait
+    shrinkToFit ? Bool, # default: true
+    background ? Bool, # default: false
+    pageRanges ? List Str, # default []
+}
+
+PageDimensions : {
+    width : F32, # default: 21.59 cm
+    height : F32, # default: 27.94 cm
+}
+
+PageMargins : {
+    top : F32, # default: 1 cm
+    bottom : F32, # default: 1 cm
+    left : F32, # default: 1 cm
+    right : F32, # default: 1 cm
+}
+
+PrintPdfJsonPayload : {
+    page : PageDimensions,
+    margin : PageMargins,
+    scale : F32,
+    orientation : Str,
+    shrinkToFit : Bool,
+    background : Bool,
+    pageRanges : List Str,
+}
+
+PrintPdfResponse : {
+    value : Str,
+}
+
+# cannot use this yet - compiler error
+printPdf : Str, Str, PrintPdfPayload -> Task.Task Str _
+printPdf = \host, sessionId, { scale ? 1.0f32, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f32, height: 27.94f32 }, margin ? { top: 1.0f32, bottom: 1.0f32, left: 1.0f32, right: 1.0f32 }, pageRanges ? [] } ->
+    payloadObj : PrintPdfJsonPayload
+    payloadObj = {
+        page,
+        margin,
+        scale,
+        orientation: if orientation == Portrait then "portrait" else "landcape",
+        shrinkToFit,
+        background,
+        pageRanges,
+    }
+
+    payload = Encode.toBytes payloadObj Json.utf8
+
+    request : Task.Task PrintPdfResponse _
+    request = sendCommand host Post "/session/$(sessionId)/print" payload
+
+    result = request!
+
+    Task.ok result.value
 
 # ---------------------------------
 
