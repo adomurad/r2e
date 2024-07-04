@@ -123,7 +123,7 @@ test12 = test "Asserts" \_ ->
     4 |> Assert.shouldBeLesserThan! 5
     5 |> Assert.shouldBeLesserOrEqualTo! 5
     4 |> Assert.shouldBeLesserOrEqualTo! 5
-    5 |> Assert.shouldBeEqualTo! 5
+    5 |> Assert.shouldBe! 5
 
 test13 = test "Type and clear input" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
@@ -177,7 +177,7 @@ test18 = test "getProperty bool" \browser ->
     nameInput |> Element.sendKeys! "my name"
     inputType = nameInput |> Element.getProperty! "checked"
     when inputType is
-        Ok value -> (!value) |> Assert.shouldBeTrue
+        Ok value -> value |> Assert.shouldBe Bool.false
         Err Empty -> Assert.failWith "this should not happen"
 
 test19 = test "getProperty int" \browser ->
@@ -186,8 +186,6 @@ test19 = test "getProperty int" \browser ->
     nameInput |> Element.sendKeys! "my name"
     inputType = nameInput |> Element.getProperty! "clientHeight"
     when inputType is
-        Ok value -> value |> Assert.shouldBeEqualTo 17
+        Ok value -> value |> Assert.shouldBe 17
         Err Empty -> Assert.failWith "this should not happen"
 
-# TODO - check getAttributre with None
-# TODO - check getProperty with None and numbers and booleans
