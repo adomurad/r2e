@@ -185,7 +185,5 @@ test19 = test "getProperty int" \browser ->
     nameInput = browser |> Browser.findElement! (Css "#developer-name")
     nameInput |> Element.sendKeys! "my name"
     inputType = nameInput |> Element.getProperty! "clientHeight"
-    when inputType is
-        Ok value -> value |> Assert.shouldBe 17
-        Err Empty -> Assert.failWith "this should not happen"
+    inputType |> Assert.shouldBe (Ok 17)
 

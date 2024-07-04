@@ -122,7 +122,7 @@ titleShouldBe = \browser, expected ->
     else
         Task.err (AssertionError "Expected page title \"$(actual)\" to be \"$(expected)\"")
 
-## Checks if the __title__ of the page is equal to the __expected__.
+## Fails with given error message.
 ##
 ## ```
 ## # fail the test
