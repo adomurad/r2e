@@ -2,7 +2,11 @@
 ## found in the `Browser`.
 module [
     getText,
+    getAttribute,
+    getProperty,
+    getValue,
     click,
+    clear,
     sendKeys,
 ]
 
@@ -31,6 +35,64 @@ getText = \element ->
 
     text |> Task.ok
 
+## Get **value** of the `Element`.
+##
+## When there is no **value** in this element then returns empty `Str`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input value
+## inputValue = input |> Element.getValue!
+## ```
+getValue : Internal.Element -> Task.Task Str [WebDriverError Str]
+getValue = \element ->
+    getProperty element "value"
+    |> Task.map \task ->
+        task
+        |> Result.withDefault ""
+
+## Get **attribute** of an `Element`.
+##
+## Returns a `Task` of `Result Str [Empty]`
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input value
+## inputValue = input |> Element.getAttribute! "value"
+## ```
+getAttribute : Internal.Element, Str -> Task.Task (Result Str [Empty]) [WebDriverError Str]
+getAttribute = \element, attributeName ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+
+    text =
+        WebDriver.getElementAttribute serverUrl sessionId elementId attributeName
+            |> Task.mapErr! toWebDriverError
+
+    text |> Task.ok
+
+# TODO - check if numbers are number :(
+## Get **property** of an `Element`.
+##
+## Returns a `Task` of `Result a [Empty]`
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input value
+## inputValue = input |> Element.getAttribute! "value"
+## ```
+getProperty : Internal.Element, Str -> Task.Task (Result a [Empty]) [WebDriverError Str]
+getProperty = \element, propertyName ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+
+    text =
+        WebDriver.getElementProperty serverUrl sessionId elementId propertyName
+            |> Task.mapErr! toWebDriverError
+
+    text |> Task.ok
+
 ## Click on a `Element`.
 ##
 ## ```
@@ -43,6 +105,22 @@ click : Internal.Element -> Task.Task {} [WebDriverError Str]
 click = \element ->
     { sessionId, serverUrl, elementId } = Internal.unpackElementData element
     WebDriver.clickElement serverUrl sessionId elementId
+        |> Task.mapErr! toWebDriverError
+
+    {} |> Task.ok
+
+## Clear an editable or resettable `Element`.
+##
+## ```
+## # find button element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # click the button
+## input |> Element.clear!
+## ```
+clear : Internal.Element -> Task.Task {} [WebDriverError Str]
+clear = \element ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+    WebDriver.clearElement serverUrl sessionId elementId
         |> Task.mapErr! toWebDriverError
 
     {} |> Task.ok

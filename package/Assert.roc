@@ -11,6 +11,8 @@ module [
     shouldBeGreaterThan,
     shouldBeLesserOrEqualTo,
     shouldBeLesserThan,
+    failWith,
+    shouldBeTrue,
 ]
 
 import pf.Task
@@ -47,6 +49,18 @@ shouldBeEqualTo = \actual, expected ->
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
         Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to \"$(expectedStr)\"")
+
+## Checks if the __actual__ `Bool` is equal to `Bool.true`.
+##
+## ```
+## () |> Assert.shouldBeTrue!
+## ```
+shouldBeTrue : Bool -> Task.Task {} [AssertionError Str]
+shouldBeTrue = \actual ->
+    if actual then
+        Task.ok {}
+    else
+        Task.err (AssertionError "Expected \"Bool.false\" to be equal to \"Bool.true\"")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
@@ -133,3 +147,13 @@ titleShouldBe = \browser, expected ->
         Task.ok {}
     else
         Task.err (AssertionError "Expected page title \"$(actual)\" to be \"$(expected)\"")
+
+## Checks if the __title__ of the page is equal to the __expected__.
+##
+## ```
+## # fail the test
+## Assert.fail! "this should not happen"
+## ```
+failWith : Str -> Task.Task _ [AssertionError Str]
+failWith = \msg ->
+    Task.err (AssertionError msg)
