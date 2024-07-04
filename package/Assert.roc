@@ -6,18 +6,18 @@ module [
     shouldBe,
     urlShouldBe,
     titleShouldBe,
-    shouldBeEqualTo,
     shouldBeGreaterOrEqualTo,
     shouldBeGreaterThan,
     shouldBeLesserOrEqualTo,
     shouldBeLesserThan,
+    failWith,
 ]
 
 import pf.Task
 import Internal exposing [Browser]
 import Browser
 
-## Checks if the __actual__ `Str` is equal to the __expected__.
+## Checks if the value of __actual__ is equal to the __expected__.
 ##
 ## ```
 ## # find button element
@@ -27,26 +27,14 @@ import Browser
 ## # assert text
 ## buttonText |> Assert.shouldBe! "Roc"
 ## ```
-shouldBe : Str, Str -> Task.Task {} [AssertionError Str]
+shouldBe : a, a -> Task.Task {} [AssertionError Str] where a implements Eq & Inspect
 shouldBe = \actual, expected ->
     if expected == actual then
         Task.ok {}
     else
-        Task.err (AssertionError "Expected \"$(actual)\" to be \"$(expected)\"")
-
-## Checks if the __actual__ `Num` is equal to the __expected__.
-##
-## ```
-## 3 |> Assert.shouldBeEqualTo! 3
-## ```
-shouldBeEqualTo : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
-shouldBeEqualTo = \actual, expected ->
-    if expected == actual then
-        Task.ok {}
-    else
-        actualStr = actual |> Num.toStr
-        expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to \"$(expectedStr)\"")
+        actualStr = Inspect.toStr actual
+        expectedStr = Inspect.toStr expected
+        Task.err (AssertionError "Expected \"$(actualStr)\" to be \"$(expectedStr)\"")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
@@ -133,3 +121,13 @@ titleShouldBe = \browser, expected ->
         Task.ok {}
     else
         Task.err (AssertionError "Expected page title \"$(actual)\" to be \"$(expected)\"")
+
+## Fails with given error message.
+##
+## ```
+## # fail the test
+## Assert.fail! "this should not happen"
+## ```
+failWith : Str -> Task.Task _ [AssertionError Str]
+failWith = \msg ->
+    Task.err (AssertionError msg)

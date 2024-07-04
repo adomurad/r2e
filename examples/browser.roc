@@ -26,6 +26,13 @@ main =
         test10,
         test11,
         test12,
+        test13,
+        test14,
+        test15,
+        test16,
+        test17,
+        test18,
+        test19,
     ]
 
     results = Test.runAllTests! tests
@@ -116,5 +123,67 @@ test12 = test "Asserts" \_ ->
     4 |> Assert.shouldBeLesserThan! 5
     5 |> Assert.shouldBeLesserOrEqualTo! 5
     4 |> Assert.shouldBeLesserOrEqualTo! 5
-    5 |> Assert.shouldBeEqualTo! 5
+    5 |> Assert.shouldBe! 5
+
+test13 = test "Type and clear input" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    nameInputValue1 = nameInput |> Element.getValue!
+    nameInputValue1 |> Assert.shouldBe! ""
+    nameInput |> Element.sendKeys! "test"
+    nameInputValue2 = nameInput |> Element.getValue!
+    nameInputValue2 |> Assert.shouldBe! "test"
+    nameInput |> Element.clear!
+    nameInputValue3 = nameInput |> Element.getValue!
+    nameInputValue3 |> Assert.shouldBe ""
+
+test14 = test "getAttribute" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    inputType = nameInput |> Element.getAttribute! "type"
+    when inputType is
+        Ok value -> value |> Assert.shouldBe "text" # <input type="text" ...
+        Err Empty -> Assert.failWith "this should not happen"
+
+test15 = test "getAttribute Empty" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    inputType = nameInput |> Element.getAttribute! "fake-attribute"
+    when inputType is
+        Ok _ -> Assert.failWith "this should be empty"
+        Err Empty -> Task.ok {}
+
+test16 = test "getProperty str" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    nameInput |> Element.sendKeys! "my name"
+    inputType = nameInput |> Element.getProperty! "value"
+    when inputType is
+        Ok value -> value |> Assert.shouldBe "my name"
+        Err Empty -> Assert.failWith "this should not happen"
+
+test17 = test "getProperty Empty" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    nameInput |> Element.sendKeys! "my name"
+    inputType = nameInput |> Element.getProperty! "fakeProp"
+    when inputType is
+        Ok _ -> Assert.failWith "this should be empty"
+        Err Empty -> Task.ok {}
+
+test18 = test "getProperty bool" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    nameInput |> Element.sendKeys! "my name"
+    inputType = nameInput |> Element.getProperty! "checked"
+    when inputType is
+        Ok value -> value |> Assert.shouldBe Bool.false
+        Err Empty -> Assert.failWith "this should not happen"
+
+test19 = test "getProperty int" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    nameInput = browser |> Browser.findElement! (Css "#developer-name")
+    nameInput |> Element.sendKeys! "my name"
+    inputType = nameInput |> Element.getProperty! "clientHeight"
+    inputType |> Assert.shouldBe (Ok 17)
 

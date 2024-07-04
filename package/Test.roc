@@ -109,7 +109,7 @@ printResults : List { name : Str, result : Result {} [ErrorMsg Str] } -> Task.Ta
 printResults = \results ->
     Stdout.line! "Results:"
     tasks = List.mapWithIndex results \res, i ->
-        index = i |> Num.toStr
+        index = (i + 1) |> Num.toStr
         when res.result is
             Ok {} -> Stdout.line "$(color.gray)Test $(index):$(color.end) \"$(res.name)\": $(color.green)OK$(color.end)"
             Err (ErrorMsg e) -> Stdout.line "$(color.gray)Test $(index):$(color.end) \"$(res.name)\": $(color.red)$(e)$(color.end)"

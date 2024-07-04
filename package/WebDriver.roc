@@ -5,6 +5,8 @@ module [
     findElement,
     findElements,
     getElementText,
+    getElementAttribute,
+    getElementProperty,
     clickElement,
     navigateTo,
     getLocator,
@@ -23,6 +25,7 @@ module [
     WindowRectResponseValue,
     printPdf,
     PrintPdfPayload,
+    clearElement,
 ]
 
 # import pf.Stdout
@@ -30,6 +33,7 @@ import pf.Http
 import pf.Task
 import json.Json
 import json.OptionOrNull exposing [OptionOrNull]
+import json.Option
 
 # ----------------------------------------------------------------
 
@@ -183,6 +187,17 @@ clickElement = \host, sessionId, elementId ->
 
     Task.ok {}
 
+clearElement : Str, Str, Str -> Task.Task {} _
+clearElement = \host, sessionId, elementId ->
+    payload = "{}" |> Str.toUtf8
+
+    request : Task.Task {} _
+    request = sendCommand host Post "/session/$(sessionId)/element/$(elementId)/clear" payload
+
+    _ = request!
+
+    Task.ok {}
+
 GetElementTextResponse : {
     value : Str,
 }
@@ -195,6 +210,40 @@ getElementText = \host, sessionId, elementId ->
     result = request!
 
     Task.ok result.value
+
+GetElementAttributeResponse : {
+    value : Option.Option Str,
+}
+
+getElementAttribute : Str, Str, Str, Str -> Task.Task (Result Str [Empty]) _
+getElementAttribute = \host, sessionId, elementId, attributeName ->
+    request : Task.Task GetElementAttributeResponse _
+    request = sendCommand host Get "/session/$(sessionId)/element/$(elementId)/attribute/$(attributeName)" []
+
+    result = request!
+
+    optionValue = Option.get result.value
+
+    when optionValue is
+        Some val -> Task.ok (Ok val)
+        None -> Task.ok (Err Empty)
+
+GetElementPropertyResponse a : {
+    value : Option.Option a,
+}
+
+getElementProperty : Str, Str, Str, Str -> Task.Task (Result a [Empty]) _
+getElementProperty = \host, sessionId, elementId, propertyName ->
+    request : Task.Task (GetElementPropertyResponse a) _
+    request = sendCommand host Get "/session/$(sessionId)/element/$(elementId)/property/$(propertyName)" []
+
+    result = request!
+
+    optionValue = Option.get result.value
+
+    when optionValue is
+        Some val -> Task.ok (Ok val)
+        None -> Task.ok (Err Empty)
 
 # SendKeysPayload : {
 #     text : Str,
