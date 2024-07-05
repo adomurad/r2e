@@ -17,8 +17,8 @@ main =
 
     tasks = [test1, test2]
 
-    results = Test.runAllTests! tasks
-    Test.printResults! results
+    results = Test.runAllTests! tasks {}
+    Test.getResultCode! results
 
 test1 = test "find roc in google" \browser ->
     # open google

@@ -1,6 +1,6 @@
 ## `Test` module contains function to create and run tests.
 ## This module is used in the _"e2e framework mode"_.
-module [test, customTest, runTest, printResults, runAllTests, getResultCode]
+module [test, customTest, runTest, runAllTests, TestRunnerOptions, getResultCode]
 
 import pf.Task exposing [Task]
 import pf.Stdout
@@ -94,28 +94,68 @@ color = {
     end: "\u(001b)[0m",
 }
 
-## Print r2e test results to Stdout.
+TestRunnerOptions : {
+    printToConsole ? Bool,
+}
+
+## Run a list of r2e tests.
 ##
+## Awailable options:
+## ```
+## TestRunnerOptions : {
+##    printToConsole ? Bool, # should print results to Stdout? Default: `Bool.true`
+## }
+## ```
 ## ```
 ## myTest = test "open roc-lang.org website" \browser ->
 ##     # open roc-lang.org
 ##     browser |> Browser.navigateTo! "http://roc-lang.org"
 ##
 ## main =
-##     testResults = Test.runAllTests! [myTest]
-##     Test.printResults! testResults
+##     testResults = Test.runAllTests! [myTest] {}
+##     Test.getResultCode! testResults
 ## ```
-printResults : List { name : Str, result : Result {} [ErrorMsg Str] } -> Task.Task {} _
-printResults = \results ->
-    Stdout.line! "Results:"
-    tasks = List.mapWithIndex results \res, i ->
-        index = (i + 1) |> Num.toStr
-        when res.result is
-            Ok {} -> Stdout.line "$(color.gray)Test $(index):$(color.end) \"$(res.name)\": $(color.green)OK$(color.end)"
-            Err (ErrorMsg e) -> Stdout.line "$(color.gray)Test $(index):$(color.end) \"$(res.name)\": $(color.red)$(e)$(color.end)"
-    Task.seq (tasks |> List.reverse) |> Task.map! \_ -> {}
+runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task (List { name : Str, result : Result {} [ErrorMsg Str] }) _
+runAllTests = \tasks, { printToConsole ? Bool.true } ->
+    printToConsole |> runIf! (Stdout.line "Starting test run...")
+    allCount = tasks |> List.len
+    # Task.seq and Task.forEach do not work for this - compiler bug
+    (_, allResults) = Task.loop! (tasks, []) \(remainingTests, results) ->
+        when remainingTests is
+            [] -> Task.ok (Done ([], results))
+            [task, .. as rest] ->
+                testIndex = allCount - (rest |> List.len)
+                printToConsole |> runIf! (printTestHeader task testIndex)
+                result = task |> Test.runTest!
+                printToConsole |> runIf! (printTestResult task testIndex result.result)
+                newResults = List.append results result
+                Task.ok (Step (rest, newResults))
+    printToConsole |> runIf! (printResultSummary allResults)
+    Task.ok allResults
+
+runIf : Bool, Task.Task {} _ -> Task.Task {} _
+runIf = \condition, task ->
+    if condition then
+        task
+    else
+        Task.ok {}
+
+printTestHeader = \@TestDefinition { name }, index ->
+    indexStr = index |> Num.toStr
+    Stdout.line! "" # empty line for readability
+    Stdout.line "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
+
+printTestResult = \@TestDefinition { name }, index, result ->
+    indexStr = index |> Num.toStr
+    when result is
+        Ok {} -> Stdout.line "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.green)OK$(color.end)"
+        Err (ErrorMsg e) -> Stdout.line "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(e)$(color.end)"
+
+printResultSummary : List { name : Str, result : Result {} [ErrorMsg Str] } -> Task.Task {} _
+printResultSummary = \results ->
     # empty line
     Stdout.line! ""
+    Stdout.line! "Summary:"
 
     totalCount = results |> List.len
     errorCount = results |> List.countIf \{ result } -> result |> Result.isErr
@@ -129,30 +169,6 @@ printResults = \results ->
         Stdout.line "$(color.red)$(msg)$(color.end)"
     else
         Stdout.line "$(color.green)$(msg)$(color.end)"
-
-## Run a list of r2e tests.
-##
-## ```
-## myTest = test "open roc-lang.org website" \browser ->
-##     # open roc-lang.org
-##     browser |> Browser.navigateTo! "http://roc-lang.org"
-##
-## main =
-##     testResults = Test.runAllTests! [myTest]
-##     Test.printResults! testResults
-## ```
-runAllTests : List TestDefinition -> Task.Task (List { name : Str, result : Result {} [ErrorMsg Str] }) *
-runAllTests = \tasks ->
-    # Task.seq and Task.forEach do not work for this - compiler bug
-    (_, allResults) = Task.loop! (tasks, []) \(remainingTests, results) ->
-        when remainingTests is
-            [] -> Task.ok (Done ([], results))
-            [task, .. as rest] ->
-                result = task |> Test.runTest!
-                newResults = List.append results result
-                Task.ok (Step (rest, newResults))
-
-    Task.ok allResults
 
 ## Get the result code.
 ##

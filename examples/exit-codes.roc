@@ -18,9 +18,7 @@ main =
     tasks = [test1, test2]
 
     # run all tests
-    results = Test.runAllTests! tasks
-    # print results to Stdout
-    Test.printResults! results
+    results = Test.runAllTests! tasks {}
     # return an exit code for the cli
     results |> Test.getResultCode
 

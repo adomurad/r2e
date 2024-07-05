@@ -35,8 +35,8 @@ main =
         test19,
     ]
 
-    results = Test.runAllTests! tests
-    Test.printResults! results
+    results = tests |> Test.runAllTests! {}
+    results |> Test.getResultCode
 
 test1 = test "Find by Css" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"

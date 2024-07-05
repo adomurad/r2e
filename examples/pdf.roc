@@ -16,8 +16,8 @@ main =
         test2,
     ]
 
-    results = Test.runAllTests! tests
-    Test.printResults! results
+    results = Test.runAllTests! tests {}
+    Test.getResultCode results
 
 # TODO - missing base64 -> List U8
 
