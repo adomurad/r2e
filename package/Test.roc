@@ -100,7 +100,7 @@ TestRunnerOptions : {
 
 ## Run a list of r2e tests.
 ##
-## Awailable options:
+## Available options:
 ## ```
 ## TestRunnerOptions : {
 ##    printToConsole ? Bool, # should print results to Stdout? Default: `Bool.true`
