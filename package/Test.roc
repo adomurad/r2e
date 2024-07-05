@@ -1,6 +1,6 @@
 ## `Test` module contains function to create and run tests.
 ## This module is used in the _"e2e framework mode"_.
-module [test, customTest, runTest, runAllTests, TestRunnerOptions, getResultCode]
+module [test, customTest, runAllTests, TestRunnerOptions, getResultCode]
 
 import pf.Task exposing [Task]
 import pf.Stdout
