@@ -23,6 +23,7 @@ module [
     minimizeWindow,
     fullScreenWindow,
     printPdfBase64,
+    getScreenshotBase64,
 ]
 
 import pf.Task exposing [Task]
@@ -455,5 +456,19 @@ printPdfBase64 = \browser, options ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
 
     WebDriver.printPdf serverUrl sessionId options
+    |> Task.mapErr toWebDriverError
+
+## Take a screenshot of the whole document.
+##
+## The result will be a **base64** encoded `Str` representation of a PNG file.
+##
+## ```
+## base64PngStr = browser |> Browser.getScreenshotBase64!
+## ```
+getScreenshotBase64 : Browser -> Task.Task Str [WebDriverError Str]
+getScreenshotBase64 = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+
+    WebDriver.takeWindowScreenshot serverUrl sessionId
     |> Task.mapErr toWebDriverError
 

@@ -14,6 +14,8 @@ main =
     tests = [
         test1,
         test2,
+        test3,
+        test4,
     ]
 
     results = Test.runAllTests! tests {}
@@ -45,4 +47,15 @@ test2 = test "Custom PDF" \browser ->
                 pageRanges: [],
             }
     File.writeUtf8! "custom.base64.txt" base64PdfStr
+
+test3 = test "Browser screenshot" \browser ->
+    browser |> Browser.navigateTo! "https://roc-lang.org/"
+    base64PngStr = browser |> Browser.getScreenshotBase64!
+    File.writeUtf8! "browser.png.base64" base64PngStr
+
+test4 = test "Element screenshot" \browser ->
+    browser |> Browser.navigateTo! "https://roc-lang.org/"
+    logo = browser |> Browser.findElement! (Css "#homepage-logo")
+    base64PngStr = logo |> Element.getScreenshotBase64!
+    File.writeUtf8! "logo.png.base64" base64PngStr
 

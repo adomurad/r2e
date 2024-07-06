@@ -26,6 +26,8 @@ module [
     printPdf,
     PrintPdfPayload,
     clearElement,
+    takeElementScreenshot,
+    takeWindowScreenshot,
 ]
 
 # import pf.Stdout
@@ -453,7 +455,6 @@ PrintPdfResponse : {
     value : Str,
 }
 
-# cannot use this yet - compiler error
 printPdf : Str, Str, PrintPdfPayload -> Task.Task Str _
 printPdf = \host, sessionId, { scale ? 1.0f32, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f32, height: 27.94f32 }, margin ? { top: 1.0f32, bottom: 1.0f32, left: 1.0f32, right: 1.0f32 }, pageRanges ? [] } ->
     payloadObj : PrintPdfJsonPayload
@@ -469,12 +470,36 @@ printPdf = \host, sessionId, { scale ? 1.0f32, orientation ? Portrait, shrinkToF
 
     payload = Encode.toBytes payloadObj Json.utf8
 
-    request : Task.Task PrintPdfResponse _
-    request = sendCommand host Post "/session/$(sessionId)/print" payload
+    # request : Task.Task PrintPdfResponse _
+    request = sendCommandWithBase64Response host Post "/session/$(sessionId)/print" payload
 
     result = request!
 
-    Task.ok result.value
+    Task.ok result
+
+ScreenshotResponse : {
+    value : Str,
+}
+
+takeWindowScreenshot : Str, Str -> Task.Task Str _
+takeWindowScreenshot = \host, sessionId ->
+    # request : Task.Task ScreenshotResponse _
+    # temporary - json decoding cannot decode strings above 170 000 chars
+    request = sendCommandWithBase64Response host Get "/session/$(sessionId)/screenshot" []
+
+    result = request!
+
+    Task.ok result
+
+takeElementScreenshot : Str, Str, Str -> Task.Task Str _
+takeElementScreenshot = \host, sessionId, elementId ->
+    # request : Task.Task ScreenshotResponse _
+    # temporary - json decoding cannot decode strings above 170 000 chars
+    request = sendCommandWithBase64Response host Get "/session/$(sessionId)/element/$(elementId)/screenshot" []
+
+    result = request!
+
+    Task.ok result
 
 # ---------------------------------
 
@@ -511,3 +536,37 @@ decodeResponse = \responseBody ->
     decoded = Decode.fromBytesPartial responseBody decoder
 
     decoded.result |> Task.fromResult |> Task.mapErr JsonParsingError
+
+# TODO
+# temporary - json decoding cannot decode strings above 170 000 chars
+extractBase64ValueFromResponse = \str ->
+    isStartOk = str |> List.startsWith (Str.toUtf8 "{\"value\":\"")
+    isEndOk = str |> List.endsWith (Str.toUtf8 "\"}")
+    if isStartOk && isEndOk then
+        str |> List.dropFirst 10 |> List.dropLast 2 |> Str.fromUtf8
+    else
+        Err DecodingError
+
+# TODO
+# temporary - json decoding cannot decode strings above 170 000 chars
+sendCommandWithBase64Response = \host, method, path, body ->
+    headers = [
+        Http.header "Content-Type" "application/json",
+    ]
+
+    result <-
+        { Http.defaultRequest &
+            url: "$(host)$(path)",
+            method,
+            body: body,
+            headers,
+        }
+        |> Http.send
+        |> Task.attempt
+
+    when result is
+        Ok response ->
+            response.body |> extractBase64ValueFromResponse |> Task.fromResult |> Task.mapErr \_ -> JsonParsingError DecodeError
+
+        Err err ->
+            Task.err err
