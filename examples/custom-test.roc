@@ -20,11 +20,7 @@ main =
 
     tasks = [test1]
 
-    results = Test.runAllTests! tasks
-    Test.printResults! results
-    Stdout.line! "Run single test"
-    testResult = Test.runTest! test1
-    Test.printResults! [testResult]
+    Test.runAllTests tasks {}
 
 test1 = test "open roc-lang.org website" \browser ->
     # open roc-lang.org
@@ -35,3 +31,4 @@ test1 = test "open roc-lang.org website" \browser ->
     headerText = header |> Element.getText!
     # check text
     headerText |> Assert.shouldBe! "Roc"
+

@@ -18,8 +18,7 @@ main =
         test4,
     ]
 
-    results = Test.runAllTests! tests {}
-    Test.getResultCode results
+    Test.runAllTests tests {}
 
 # TODO - missing base64 -> List U8
 

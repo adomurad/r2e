@@ -31,7 +31,7 @@ module [
 ]
 
 # import pf.Stdout
-import pf.Http
+import pf.Http exposing [TimeoutConfig]
 import pf.Task
 import json.Json
 import json.OptionOrNull exposing [OptionOrNull]
@@ -451,9 +451,9 @@ PrintPdfJsonPayload : {
     pageRanges : List Str,
 }
 
-PrintPdfResponse : {
-    value : Str,
-}
+# PrintPdfResponse : {
+#     value : Str,
+# }
 
 printPdf : Str, Str, PrintPdfPayload -> Task.Task Str _
 printPdf = \host, sessionId, { scale ? 1.0f32, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f32, height: 27.94f32 }, margin ? { top: 1.0f32, bottom: 1.0f32, left: 1.0f32, right: 1.0f32 }, pageRanges ? [] } ->
@@ -477,9 +477,9 @@ printPdf = \host, sessionId, { scale ? 1.0f32, orientation ? Portrait, shrinkToF
 
     Task.ok result
 
-ScreenshotResponse : {
-    value : Str,
-}
+# ScreenshotResponse : {
+#     value : Str,
+# }
 
 takeWindowScreenshot : Str, Str -> Task.Task Str _
 takeWindowScreenshot = \host, sessionId ->
@@ -503,6 +503,9 @@ takeElementScreenshot = \host, sessionId, elementId ->
 
 # ---------------------------------
 
+timeoutConfig : TimeoutConfig
+timeoutConfig = TimeoutMilliseconds 30000
+
 sendCommand = \host, method, path, body ->
     # bodyObj = body |> Str.toUtf8
     headers = [
@@ -515,6 +518,7 @@ sendCommand = \host, method, path, body ->
             method,
             body: body,
             headers,
+            timeout: timeoutConfig,
         }
         |> Http.send
         |> Task.attempt
@@ -560,6 +564,7 @@ sendCommandWithBase64Response = \host, method, path, body ->
             method,
             body: body,
             headers,
+            timeout: timeoutConfig,
         }
         |> Http.send
         |> Task.attempt
