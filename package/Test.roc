@@ -7,6 +7,7 @@ import pf.Stdout
 import Browser
 import Driver
 import Internal exposing [Browser, Driver]
+import InternalReporting
 
 TestRunOptions : {
     screenshotOnFail : Bool,
@@ -134,12 +135,19 @@ color = {
     end: "\u(001b)[0m",
 }
 
-ReporterDefinition : {}
 TestRunnerOptions : {
     printToConsole ? Bool,
     screenshotOnFail ? Bool,
-    reporters ? List ReporterDefinition,
+    # TODO compiler error
+    # reporters ? List Reporting.ReporterDefinition,
+    outDir ? Str,
 }
+
+defaultOutDir = "testResults"
+# defaultReporters : List Reporting.ReporterDefinition
+defaultReporters = []
+# defaultReporters : List Reporting.ReporterDefinition
+# defaultReporters = [Reporting.basicHtmlReporter]
 
 ## Run a list of r2e tests.
 ##
@@ -158,9 +166,8 @@ TestRunnerOptions : {
 ##     testResults = Test.runAllTests! [myTest] {}
 ##     Test.getResultCode! testResults
 ## ```
-# runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task (List { name : Str, result : Result {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str] }) _
-runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task {} [Exit I32 Str, StdoutErr _]
-runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, reporters ? [] } ->
+# runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task {} _
+runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, outDir ? defaultOutDir, reporters ? defaultReporters } ->
     printToConsole |> runIf! (Stdout.line "Starting test run...")
     allCount = tasks |> List.len
     # Task.seq and Task.forEach do not work for this - compiler bug
@@ -175,6 +182,8 @@ runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true
                 newResults = List.append results result
                 Task.ok (Step (rest, newResults))
     printToConsole |> runIf! (printResultSummary allResults)
+    reporters |> InternalReporting.runReporters! allResults outDir
+
     allResults |> getResultCode
 
 runIf : Bool, Task.Task {} _ -> Task.Task {} _
@@ -244,3 +253,4 @@ getResultCode = \results ->
         Task.err (Exit 1 "Test run failed")
     else
         Task.ok {}
+

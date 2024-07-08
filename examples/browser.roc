@@ -42,7 +42,6 @@ test1 = test "Find by Css" \browser ->
     button = browser |> Browser.findElement! (Css "#submit-button")
     buttonText = button |> Element.getText!
     Stdout.line! "Button text is: $(buttonText)"
-    buttonText |> Assert.shouldBe "fake tesxt"
 
 test2 = test "Find by XPath" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
