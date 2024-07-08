@@ -23,6 +23,7 @@ main =
     tests = [
         test1,
         test2,
+        test3,
     ]
 
     # run without reporters -default for now
@@ -38,7 +39,7 @@ main =
     # run without screenshots
     tests
     |> Test.runAllTests {
-        reporters: [BasicHtmlReporter.reporter],
+        reporters: [BasicHtmlReporter.reporter |> Reporting.rename "withoutScreenshots"],
         screenshotOnFail: Bool.false,
     }
 
@@ -54,3 +55,7 @@ test2 = test "Fail with custom error" \browser ->
     # this fails
     Task.err! (MyCustomError "this failed")
     Stdout.line! "will not reach this line"
+
+test3 = test "this test should not fail" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
