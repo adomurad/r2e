@@ -1,5 +1,5 @@
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.12.0/cf_TpThUd4e69C7WzHxCbgsagnDmk3xlb_HmEKXTICw.tar.br",
     json: "https://github.com/lukewilliamboswell/roc-json/releases/download/0.10.0/KbIfTNbxShRX1A1FgXei1SpO5Jn8sgP6HP6PXbi-xyA.tar.br",
     # r2e: "https://github.com/adomurad/r2e/releases/download/v0.1.2-alpha/7av1ULbhNFk9iyUA4KSPBDozlNftjsC7BSQkgcsw1TI.tar.br",
     r2e: "../package/main.roc",
@@ -18,11 +18,7 @@ main =
     tasks = [test1, test2]
 
     # run all tests
-    results = Test.runAllTests! tasks
-    # print results to Stdout
-    Test.printResults! results
-    # return an exit code for the cli
-    results |> Test.getResultCode
+    Test.runAllTests tasks {}
 
 test1 = test "check roc header" \browser ->
     # go to roc-lang.org

@@ -8,6 +8,7 @@ module [
     click,
     clear,
     sendKeys,
+    getScreenshotBase64,
 ]
 
 import pf.Task
@@ -161,3 +162,18 @@ sendKeys = \element, str ->
 replaceSequence : Str, Str, Str -> Str
 replaceSequence = \str, old, new ->
     str |> Str.replaceEach old new
+
+## Take a screenshot of a `Element`.
+##
+## The result will be a **base64** encoded `Str` representation of a PNG file.
+##
+## ```
+## base64PngStr = button |> Element.getScreenshotBase64!
+## ```
+getScreenshotBase64 : Internal.Element -> Task.Task Str [WebDriverError Str]
+getScreenshotBase64 = \element ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+
+    WebDriver.takeElementScreenshot serverUrl sessionId elementId
+    |> Task.mapErr toWebDriverError
+

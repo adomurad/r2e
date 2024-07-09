@@ -1,5 +1,5 @@
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.12.0/cf_TpThUd4e69C7WzHxCbgsagnDmk3xlb_HmEKXTICw.tar.br",
     json: "https://github.com/lukewilliamboswell/roc-json/releases/download/0.10.0/KbIfTNbxShRX1A1FgXei1SpO5Jn8sgP6HP6PXbi-xyA.tar.br",
     r2e: "../package/main.roc",
 }
@@ -20,11 +20,7 @@ main =
 
     tasks = [test1]
 
-    results = Test.runAllTests! tasks
-    Test.printResults! results
-    Stdout.line! "Run single test"
-    testResult = Test.runTest! test1
-    Test.printResults! [testResult]
+    Test.runAllTests tasks {}
 
 test1 = test "open roc-lang.org website" \browser ->
     # open roc-lang.org
@@ -35,3 +31,4 @@ test1 = test "open roc-lang.org website" \browser ->
     headerText = header |> Element.getText!
     # check text
     headerText |> Assert.shouldBe! "Roc"
+

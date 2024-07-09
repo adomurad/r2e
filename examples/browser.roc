@@ -1,5 +1,5 @@
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.12.0/cf_TpThUd4e69C7WzHxCbgsagnDmk3xlb_HmEKXTICw.tar.br",
     json: "https://github.com/lukewilliamboswell/roc-json/releases/download/0.10.0/KbIfTNbxShRX1A1FgXei1SpO5Jn8sgP6HP6PXbi-xyA.tar.br",
     r2e: "../package/main.roc",
 }
@@ -10,6 +10,7 @@ import r2e.Browser
 import r2e.Element
 import r2e.Test exposing [test]
 import r2e.Assert
+import r2e.Reporting.BasicHtmlReporter
 
 main : Task.Task {} _
 main =
@@ -35,8 +36,7 @@ main =
         test19,
     ]
 
-    results = Test.runAllTests! tests
-    Test.printResults! results
+    tests |> Test.runAllTests { reporters: [Reporting.BasicHtmlReporter.reporter] }
 
 test1 = test "Find by Css" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"

@@ -23,6 +23,7 @@ module [
     minimizeWindow,
     fullScreenWindow,
     printPdfBase64,
+    getScreenshotBase64,
 ]
 
 import pf.Task exposing [Task]
@@ -197,7 +198,7 @@ findElement = \browser, locator ->
         WebDriver.findElement serverUrl sessionId driverLocator
             |> Task.mapErr! \err ->
                 when err is
-                    HttpErr (BadStatus 404) ->
+                    HttpErr (BadStatus { code: 404, body: _ }) ->
                         (_, locatorValue) = WebDriver.getLocator driverLocator
                         WebDriverError "element ($(locatorValue)) not found"
 
@@ -267,7 +268,7 @@ tryFindElement = \browser, locator ->
         Ok elementId ->
             Internal.packElementData { sessionId, serverUrl, elementId } |> Found |> Task.ok
 
-        Err (HttpErr (BadStatus 404)) ->
+        Err (HttpErr (BadStatus { code: 404, body: _ })) ->
             NotFound |> Task.ok
 
         Err err ->
@@ -455,5 +456,19 @@ printPdfBase64 = \browser, options ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
 
     WebDriver.printPdf serverUrl sessionId options
+    |> Task.mapErr toWebDriverError
+
+## Take a screenshot of the whole document.
+##
+## The result will be a **base64** encoded `Str` representation of a PNG file.
+##
+## ```
+## base64PngStr = browser |> Browser.getScreenshotBase64!
+## ```
+getScreenshotBase64 : Browser -> Task.Task Str [WebDriverError Str]
+getScreenshotBase64 = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+
+    WebDriver.takeWindowScreenshot serverUrl sessionId
     |> Task.mapErr toWebDriverError
 
