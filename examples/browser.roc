@@ -10,6 +10,7 @@ import r2e.Browser
 import r2e.Element
 import r2e.Test exposing [test]
 import r2e.Assert
+import r2e.Reporting.BasicHtmlReporter
 
 main : Task.Task {} _
 main =
@@ -35,7 +36,7 @@ main =
         test19,
     ]
 
-    tests |> Test.runAllTests {}
+    tests |> Test.runAllTests { reporters: [Reporting.BasicHtmlReporter.reporter] }
 
 test1 = test "Find by Css" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
