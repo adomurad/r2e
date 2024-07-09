@@ -5,8 +5,8 @@ import pf.Task exposing [Task]
 import Reporting
 import Reporting.HtmlEncode as HtmlEncode
 
-reporter = Reporting.createReporter "basicHtmlReporter" \results ->
-    duration = 35
+reporter = Reporting.createReporter "basicHtmlReporter" \results, meta ->
+    duration = ((Num.toFrac meta.duration) / 1000) |> secToMinAndSec
     successCount = results |> List.countIf (\{ result } -> result |> Result.isOk)
     errorCount = results |> List.countIf (\{ result } -> result |> Result.isErr)
 
@@ -15,17 +15,18 @@ reporter = Reporting.createReporter "basicHtmlReporter" \results ->
 
     [{ filePath: "index.html", content: htmlStr }]
 
-resultToHtml = \{ name, result } ->
+resultToHtml = \{ name, result, duration } ->
     safeName = name |> HtmlEncode.encode
     isOk = result |> Result.isOk
     class = if isOk then "ok" else "error"
     testDetails = result |> getTestDetails
+    testDuration = (Num.toFrac duration) / 1000 |> fracToStr
 
     """
     <li class="$(class)">
         <div class="test-header">
             <span>$(safeName)</span>
-            <span class="test-duration">-> 15s</span>
+            <span class="test-duration">-> $(testDuration)s</span>
         </div>
         $(testDetails)
     </li>
@@ -59,8 +60,19 @@ getTestDetails = \result ->
             </div>
             """
 
+fracToStr : Frac * -> Str
+fracToStr = \frac ->
+    Num.toStr ((Num.toFrac (Num.round (frac * 10))) / 10)
+
+secToMinAndSec = \time ->
+    fullMinutes = (time / 60) |> Num.floor
+    seconds = (time - Num.toFrac (fullMinutes * 60)) |> Num.ceiling
+    (fullMinutes, seconds)
+
 getHtml = \duration, successCount, errorCount, resultsContent ->
-    durationStr = duration |> Num.toStr
+    (min, sec) = duration
+    minutesStr = min |> Num.toStr
+    secondsStr = sec |> Num.toStr
     successCountStr = successCount |> Num.toStr
     errorCountStr = errorCount |> Num.toStr
     """
@@ -228,7 +240,7 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
                 d="M5.06152 12C5.55362 8.05369 8.92001 5 12.9996 5C17.4179 5 20.9996 8.58172 20.9996 13C20.9996 17.4183 17.4179 21 12.9996 21H8M13 13V9M11 3H15M3 15H8M5 18H10"
                 stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <span>$(durationStr) min</span>
+            <span>$(minutesStr) min $(secondsStr) s</span>
             </div>
             <div class="metric">
             <svg class="ok" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 122.88 122.88">
@@ -271,3 +283,4 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
 
     </html>
     """
+

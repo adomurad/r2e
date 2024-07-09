@@ -4,10 +4,11 @@ module [test, customTest, runAllTests, TestRunnerOptions]
 
 import pf.Task exposing [Task]
 import pf.Stdout
+import pf.Utc
 import Browser
 import Driver
 import Internal exposing [Browser, Driver]
-import InternalReporting
+import InternalReporting exposing [TestRunResult]
 
 TestRunOptions : {
     screenshotOnFail : Bool,
@@ -108,12 +109,16 @@ takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
 ##     testResult = Test.runTest! myTest
 ##     Test.printResults! [testResult]
 ## ```
-runTest : TestDefinition, { screenshotOnFail : Bool } -> Task.Task { name : Str, result : Result {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str] } *
+runTest : TestDefinition, TestRunOptions -> Task.Task TestRunResult *
 runTest = \@TestDefinition { testCallback, name }, options ->
+    startTime = Utc.now!
     result = (testCallback options) |> Task.result!
+    endTime = Utc.now!
+    duration = (Utc.deltaAsMillis startTime endTime) |> Num.toU64
     Task.ok {
         name: name,
         result: result,
+        duration,
     }
 
 errorToStr = \result ->
@@ -169,6 +174,7 @@ defaultReporters = []
 # runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task {} _
 runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, outDir ? defaultOutDir, reporters ? defaultReporters } ->
     printToConsole |> runIf! (Stdout.line "Starting test run...")
+    testStartTime = Utc.now!
     allCount = tasks |> List.len
     # Task.seq and Task.forEach do not work for this - compiler bug
     (_, allResults) = Task.loop! (tasks, []) \(remainingTests, results) ->
@@ -182,8 +188,9 @@ runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true
                 newResults = List.append results result
                 Task.ok (Step (rest, newResults))
     printToConsole |> runIf! (printResultSummary allResults)
-    reporters |> InternalReporting.runReporters! allResults outDir
-
+    testEndTime = Utc.now!
+    testsDuration = (Utc.deltaAsMillis testStartTime testEndTime) |> Num.toU64
+    reporters |> InternalReporting.runReporters! allResults outDir testsDuration
     allResults |> getResultCode
 
 runIf : Bool, Task.Task {} _ -> Task.Task {} _
@@ -205,7 +212,7 @@ printTestResult = \@TestDefinition { name }, index, result ->
         Err (ErrorMsg e) -> Stdout.line "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(e)$(color.end)"
         Err (ErrorMsgWithScreenshot e _) -> Stdout.line "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(e)$(color.end)"
 
-printResultSummary : List { name : Str, result : Result {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str] } -> Task.Task {} _
+printResultSummary : List TestRunResult -> Task.Task {} _
 printResultSummary = \results ->
     # empty line
     Stdout.line! ""
@@ -243,7 +250,7 @@ printResultSummary = \results ->
 ##     # return an exit code for the cli
 ##     results |> Test.getResultCode
 ## ```
-getResultCode : List { name : Str, result : Result {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str] } -> Task.Task {} [Exit I32 Str]
+getResultCode : List TestRunResult -> Task.Task {} [Exit I32 Str]
 getResultCode = \results ->
     anyFailures =
         results

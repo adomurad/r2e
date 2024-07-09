@@ -12,7 +12,8 @@ import r2e.Test exposing [test]
 import r2e.Reporting
 import r2e.Reporting.BasicHtmlReporter as BasicHtmlReporter
 
-customReporter = Reporting.createReporter "myCustomReporter" \results ->
+
+customReporter = Reporting.createReporter "myCustomReporter" \results, _meta ->
     lenStr = results |> List.len |> Num.toStr
     indexFile = { filePath: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
     testFile = { filePath: "test.txt", content: "this is just a test" }

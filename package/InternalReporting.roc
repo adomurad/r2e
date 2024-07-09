@@ -1,5 +1,5 @@
 ## `Report` module contains test reporters.
-module [runReporters, ReporterCallback, ReporterDefinition]
+module [runReporters, ReporterCallback, ReporterDefinition, TestRunResult]
 
 import pf.Task exposing [Task]
 import pf.Dir
@@ -8,24 +8,29 @@ import pf.File
 
 TestRunResult : {
     name : Str,
+    duration : U64,
     result : Result {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str],
 }
 
-ReporterCallback : List TestRunResult -> List { filePath : Str, content : Str }
+TestRunMetadata : {
+    duration : U64,
+}
+
+ReporterCallback : List TestRunResult, TestRunMetadata -> List { filePath : Str, content : Str }
 
 ReporterDefinition : {
     name : Str,
     callback : ReporterCallback,
 }
 
-runReporters : List ReporterDefinition, List TestRunResult, Str -> Task {} _
-runReporters = \reporters, results, outDir ->
+runReporters : List ReporterDefinition, List TestRunResult, Str, U64 -> Task {} _
+runReporters = \reporters, results, outDir, duration ->
     reporters
     |> Task.forEach \reporter ->
-        reporter |> runReporter results outDir
+        reporter |> runReporter results outDir duration
 
-runReporter : ReporterDefinition, List TestRunResult, Str -> Task {} _
-runReporter = \reporter, results, outDir ->
+runReporter : ReporterDefinition, List TestRunResult, Str, U64 -> Task {} _
+runReporter = \reporter, results, outDir, duration ->
     dirExists = outDir |> Path.fromStr |> Path.isDir |> Task.result! |> Result.withDefault Bool.false
     createDirIfNoExists =
         if dirExists then
@@ -35,7 +40,7 @@ runReporter = \reporter, results, outDir ->
     createDirIfNoExists!
 
     cb = reporter.callback
-    readyFiles = cb results
+    readyFiles = cb results { duration }
     readyFiles
         |> Task.forEach! \{ filePath, content } ->
             reporterDirName = reporter.name |> Str.replaceEach "/" "_"
