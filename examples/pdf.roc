@@ -16,6 +16,8 @@ main =
         test2,
         test3,
         test4,
+        test5,
+        test6,
     ]
 
     Test.runAllTests tests {}
@@ -24,8 +26,8 @@ main =
 
 test1 = test "Default PDF" \browser ->
     browser |> Browser.navigateTo! "https://roc-lang.org/"
-    base64PdfStr = browser |> Browser.printPdfBase64! {}
-    File.writeUtf8! "default.base64.txt" base64PdfStr
+    pdfContent = browser |> Browser.printPdf! {}
+    File.writeBytes! "files/default.pdf" pdfContent
 
 test2 = test "Custom PDF" \browser ->
     browser |> Browser.navigateTo! "https://roc-lang.org/"
@@ -45,16 +47,27 @@ test2 = test "Custom PDF" \browser ->
                 background: Bool.true,
                 pageRanges: [],
             }
-    File.writeUtf8! "custom.base64.txt" base64PdfStr
+    File.writeUtf8! "files/custom.base64.txt" base64PdfStr
 
 test3 = test "Browser screenshot" \browser ->
     browser |> Browser.navigateTo! "https://roc-lang.org/"
     base64PngStr = browser |> Browser.getScreenshotBase64!
-    File.writeUtf8! "browser.png.base64" base64PngStr
+    File.writeUtf8! "files/browser.png.base64" base64PngStr
 
 test4 = test "Element screenshot" \browser ->
     browser |> Browser.navigateTo! "https://roc-lang.org/"
     logo = browser |> Browser.findElement! (Css "#homepage-logo")
     base64PngStr = logo |> Element.getScreenshotBase64!
-    File.writeUtf8! "logo.png.base64" base64PngStr
+    File.writeUtf8! "files/logo.png.base64" base64PngStr
+
+test5 = test "Browser screenshot" \browser ->
+    browser |> Browser.navigateTo! "https://roc-lang.org/"
+    pngBytes = browser |> Browser.getScreenshot!
+    File.writeBytes! "files/browser.png" pngBytes
+
+test6 = test "Element screenshot" \browser ->
+    browser |> Browser.navigateTo! "https://roc-lang.org/"
+    logo = browser |> Browser.findElement! (Css "#homepage-logo")
+    pngBytes = logo |> Element.getScreenshot!
+    File.writeBytes! "files/logo.png" pngBytes
 

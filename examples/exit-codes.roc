@@ -18,7 +18,7 @@ main =
     tasks = [test1, test2]
 
     # run all tests
-    Test.runAllTests tasks {}
+    Test.runAllTests tasks { reporters: [BasicHtmlReporter.reporter] }
 
 test1 = test "check roc header" \browser ->
     # go to roc-lang.org
@@ -35,6 +35,8 @@ test2 = test "use roc repl" \browser ->
     browser |> Browser.navigateTo! "http://roc-lang.org"
     # find repl input
     replInput = browser |> Browser.findElement! (Css "#source-input")
+    # wait for repl initialization
+    Sleep.millis! 200
     # send keys to repl
     replInput |> Element.sendKeys! "0.1+0.2{enter}"
     # find repl output element

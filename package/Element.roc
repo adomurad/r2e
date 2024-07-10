@@ -9,9 +9,11 @@ module [
     clear,
     sendKeys,
     getScreenshotBase64,
+    getScreenshot,
 ]
 
 import pf.Task
+import base64.Base64
 import WebDriver
 import Internal
 import Error exposing [toWebDriverError]
@@ -175,5 +177,20 @@ getScreenshotBase64 = \element ->
     { sessionId, serverUrl, elementId } = Internal.unpackElementData element
 
     WebDriver.takeElementScreenshot serverUrl sessionId elementId
+    |> Task.mapErr toWebDriverError
+
+## Take a screenshot of a `Element`.
+##
+## The result will be a **base64** encoded `List U8` representation of a PNG file.
+##
+## ```
+## pngBytes = button |> Element.getScreenshot!
+## ```
+getScreenshot : Internal.Element -> Task.Task (List U8) [WebDriverError Str]
+getScreenshot = \element ->
+    { sessionId, serverUrl, elementId } = Internal.unpackElementData element
+
+    WebDriver.takeElementScreenshot serverUrl sessionId elementId
+    |> Task.map \value -> value |> Base64.decodeStr
     |> Task.mapErr toWebDriverError
 
