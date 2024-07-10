@@ -23,10 +23,13 @@ module [
     minimizeWindow,
     fullScreenWindow,
     printPdfBase64,
+    printPdf,
     getScreenshotBase64,
+    getScreenshot,
 ]
 
 import pf.Task exposing [Task]
+import base64.Base64
 import WebDriver exposing [LocatorStrategy]
 import Internal exposing [Driver, Browser, Element]
 import Error exposing [toWebDriverError, R2EError]
@@ -198,7 +201,8 @@ findElement = \browser, locator ->
         WebDriver.findElement serverUrl sessionId driverLocator
             |> Task.mapErr! \err ->
                 when err is
-                    HttpErr (BadStatus { code: 404, body: _ }) ->
+                    # HttpErr (BadStatus { code: 404, body: _ }) ->
+                    HttpErr (BadStatus 404) ->
                         (_, locatorValue) = WebDriver.getLocator driverLocator
                         WebDriverError "element ($(locatorValue)) not found"
 
@@ -268,7 +272,8 @@ tryFindElement = \browser, locator ->
         Ok elementId ->
             Internal.packElementData { sessionId, serverUrl, elementId } |> Found |> Task.ok
 
-        Err (HttpErr (BadStatus { code: 404, body: _ })) ->
+        # Err (HttpErr (BadStatus { code: 404, body: _ })) ->
+        Err (HttpErr (BadStatus 404)) ->
             NotFound |> Task.ok
 
         Err err ->
@@ -458,6 +463,21 @@ printPdfBase64 = \browser, options ->
     WebDriver.printPdf serverUrl sessionId options
     |> Task.mapErr toWebDriverError
 
+## Print current page to PDF.
+##
+## The result will be a `List U8`.
+##
+## ```
+## bytes = browser |> Browser.printPdf! {}
+## ```
+printPdf : Browser, WebDriver.PrintPdfPayload -> Task.Task (List U8) [WebDriverError Str]
+printPdf = \browser, options ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+
+    WebDriver.printPdf serverUrl sessionId options
+    |> Task.map \value -> value |> Base64.decodeStr
+    |> Task.mapErr toWebDriverError
+
 ## Take a screenshot of the whole document.
 ##
 ## The result will be a **base64** encoded `Str` representation of a PNG file.
@@ -470,5 +490,20 @@ getScreenshotBase64 = \browser ->
     { sessionId, serverUrl } = Internal.unpackBrowserData browser
 
     WebDriver.takeWindowScreenshot serverUrl sessionId
+    |> Task.mapErr toWebDriverError
+
+## Take a screenshot of the whole document.
+##
+## The result will be a **base64** encoded `List U8` representation of a PNG file.
+##
+## ```
+## pngBytes = browser |> Browser.getScreenshot!
+## ```
+getScreenshot : Browser -> Task.Task (List U8) [WebDriverError Str]
+getScreenshot = \browser ->
+    { sessionId, serverUrl } = Internal.unpackBrowserData browser
+
+    WebDriver.takeWindowScreenshot serverUrl sessionId
+    |> Task.map \value -> value |> Base64.decodeStr
     |> Task.mapErr toWebDriverError
 
