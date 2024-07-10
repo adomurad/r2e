@@ -201,7 +201,8 @@ findElement = \browser, locator ->
         WebDriver.findElement serverUrl sessionId driverLocator
             |> Task.mapErr! \err ->
                 when err is
-                    HttpErr (BadStatus { code: 404, body: _ }) ->
+                    # HttpErr (BadStatus { code: 404, body: _ }) ->
+                    HttpErr (BadStatus 404) ->
                         (_, locatorValue) = WebDriver.getLocator driverLocator
                         WebDriverError "element ($(locatorValue)) not found"
 
@@ -271,7 +272,8 @@ tryFindElement = \browser, locator ->
         Ok elementId ->
             Internal.packElementData { sessionId, serverUrl, elementId } |> Found |> Task.ok
 
-        Err (HttpErr (BadStatus { code: 404, body: _ })) ->
+        # Err (HttpErr (BadStatus { code: 404, body: _ })) ->
+        Err (HttpErr (BadStatus 404)) ->
             NotFound |> Task.ok
 
         Err err ->
