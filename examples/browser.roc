@@ -36,7 +36,7 @@ main =
         test19,
     ]
 
-    tests |> Test.runAllTests { reporters: [Reporting.BasicHtmlReporter.reporter] }
+    tests |> Test.runTests { reporters: [Reporting.BasicHtmlReporter.reporter] }
 
 test1 = test "Find by Css" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"

@@ -18,7 +18,7 @@ main =
     tasks = [test1, test2]
 
     # run all tests
-    Test.runAllTests tasks { reporters: [BasicHtmlReporter.reporter] }
+    Test.runTests tasks { reporters: [BasicHtmlReporter.reporter] }
 
 test1 = test "check roc header" \browser ->
     # go to roc-lang.org

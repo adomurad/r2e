@@ -28,7 +28,7 @@ main =
     ]
 
     # run without reporters -default for now
-    _ = tests |> Test.runAllTests {} |> Task.result!
+    _ = tests |> Test.runTests {} |> Task.result!
     # run with reporters
     _ =
         tests

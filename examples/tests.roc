@@ -17,7 +17,7 @@ main =
 
     tasks = [test1, test2]
 
-    Test.runAllTests tasks {}
+    Test.runTests tasks {}
 
 test1 = test "find roc in google" \browser ->
     # open google

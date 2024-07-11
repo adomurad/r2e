@@ -1,6 +1,6 @@
 ## `Test` module contains function to create and run tests.
 ## This module is used in the _"e2e framework mode"_.
-module [test, runAllTests, TestRunnerOptions]
+module [test, runTests, TestRunnerOptions]
 
 import pf.Task exposing [Task]
 import pf.Stdout
@@ -138,11 +138,11 @@ defaultReporters = []
 ##     browser |> Browser.navigateTo! "http://roc-lang.org"
 ##
 ## main =
-##     testResults = Test.runAllTests! [myTest] {}
+##     testResults = Test.runTests! [myTest] {}
 ##     Test.getResultCode! testResults
 ## ```
-# runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task {} _
-runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, outDir ? defaultOutDir, reporters ? defaultReporters, driver ? Driver.create {} } ->
+# runTests : List TestDefinition, TestRunnerOptions -> Task.Task {} _
+runTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, outDir ? defaultOutDir, reporters ? defaultReporters, driver ? Driver.create {} } ->
     printToConsole |> runIf! (Stdout.line "Starting test run...")
     testStartTime = Utc.now!
     allCount = tasks |> List.len
