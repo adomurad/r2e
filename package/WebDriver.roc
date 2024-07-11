@@ -525,9 +525,13 @@ sendCommand = \host, method, path, body ->
 
     when result is
         Ok response ->
+            # r2 = response.body |> Str.fromUtf8 |> Result.withDefault "fail"
+            # _ = Stdout.line "ok: $(r2)" |> Task.result!
+            # _ = Stdout.line "ok: $(response.statusText)" |> Task.result!
             decodeResponse response.body
 
         Err err ->
+            # _ = Stdout.line "error" |> Task.result!
             # {} <- await (logError err)
             Task.err err
 
