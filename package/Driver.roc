@@ -32,6 +32,8 @@ getDriverUrl = \config ->
 ##
 DriverConfiguration : {
     connection ? Connection,
+    headless ? Bool,
+    acceptInsecureCerts ? Bool,
 }
 
 ## Connection options for the `Driver`
@@ -64,7 +66,7 @@ Connection : [
 ## browser = Browser.open! driver "http://google.com"
 ## ```
 create : DriverConfiguration -> Internal.Driver
-create = \{ connection ? LocalServerWithDefaultPort } ->
+create = \{ connection ? LocalServerWithDefaultPort, headless ? Bool.false, acceptInsecureCerts ? Bool.true } ->
     serverUrl = getDriverUrl connection
-    Internal.packDriverData { serverUrl }
+    Internal.packDriverData { serverUrl, headless, acceptInsecureCerts }
 

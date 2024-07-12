@@ -46,15 +46,36 @@ import Error exposing [toWebDriverError, R2EError]
 ## ```
 open : Driver, Str -> Task Browser R2EError
 open = \driver, url ->
-    { serverUrl } = Internal.unpackDriverData driver
+    { serverUrl, headless, acceptInsecureCerts } = Internal.unpackDriverData driver
 
     sessionId =
-        WebDriver.startSession serverUrl
+        WebDriver.startSession serverUrl { headless,acceptInsecureCerts }
             |> Task.mapErr! toWebDriverError
     WebDriver.navigateTo serverUrl sessionId url
         |> Task.mapErr! toWebDriverError
 
     Internal.packBrowserData { sessionId, serverUrl } |> Task.ok
+
+## Open a new browser window on a blank page.
+##
+## ```
+## # create a driver client for http://localhost:9515
+## driver = Driver.create LocalServerWithDefaultPort
+## # open empty browser
+## browser = Browser.createBrowser! driver
+## ```
+createBrowser : Driver -> Task Browser R2EError
+createBrowser = \driver ->
+    { serverUrl, headless, acceptInsecureCerts } = Internal.unpackDriverData driver
+
+    sessionId =
+        WebDriver.startSession serverUrl { headless, acceptInsecureCerts }
+            |> Task.mapErr! toWebDriverError
+
+    Internal.packBrowserData { sessionId, serverUrl } |> Task.ok
+
+    
+# startSession = \
 
 ## Open a new browser window and navigates to the given URL
 ## with a callback function.
@@ -72,24 +93,6 @@ openWithCleanup : Driver, Str, (Browser -> Task {} _) -> Task {} _
 openWithCleanup = \driver, url, task ->
     browser = open! driver url
     runWithCleanup browser task
-
-## Open a new browser window on a blank page.
-##
-## ```
-## # create a driver client for http://localhost:9515
-## driver = Driver.create LocalServerWithDefaultPort
-## # open empty browser
-## browser = Browser.createBrowser! driver
-## ```
-createBrowser : Driver -> Task Browser R2EError
-createBrowser = \driver ->
-    { serverUrl } = Internal.unpackDriverData driver
-
-    sessionId =
-        WebDriver.startSession serverUrl
-            |> Task.mapErr! toWebDriverError
-
-    Internal.packBrowserData { sessionId, serverUrl } |> Task.ok
 
 ## Open a new browser window with a callback function.
 ## When the callback function ends on `Task.ok` or `Task.err`

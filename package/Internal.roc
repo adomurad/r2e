@@ -14,6 +14,8 @@ module [
 
 Driver := {
     serverUrl : Str,
+    headless: Bool,
+    acceptInsecureCerts: Bool,
 }
 
 Browser := {

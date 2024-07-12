@@ -84,15 +84,67 @@ checkStatus = \host ->
 
     Task.ok result
 
+StartSessionPayload : {
+    headless ? Bool,
+    acceptInsecureCerts ? Bool,
+}
+
+StartSessionJsonPayload : {
+    capabilities : CapabilitiesJsonPayload,
+}
+
+CapabilitiesJsonPayload : {
+    alwaysMatch : CapabilitiesSet,
+    # firstMatch : List CapabilitiesSet,
+}
+
+CapabilitiesSet : {
+    acceptInsecureCerts : Bool,
+    edgeOptions : BrowserOptions,
+    chromeOptions : BrowserOptions,
+    firefoxOptions : BrowserOptions,
+}
+
+BrowserOptions : {
+    args : List Str,
+}
+
 StartSessionResponse : {
     value : {
         sessionId : Str,
     },
 }
 
-startSession : Str -> Task.Task Str _
-startSession = \host ->
-    payload = "{\"capabilities\": {}}" |> Str.toUtf8
+getBrowserOptions = \headless -> {
+    args: if headless then
+        ["--headless"]
+    else
+        [],
+}
+
+jsonWebdriverMapping = \key ->
+    when key is
+        "edgeOptions" -> "ms:edgeOptions"
+        "chromeOptions" -> "goog:chromeOptions"
+        "firefoxOptions" -> "moz:firefoxOptions"
+        k -> k
+
+startSession : Str, StartSessionPayload -> Task.Task Str _
+startSession = \host, { headless ? Bool.false, acceptInsecureCerts ? Bool.false } ->
+    payloadObj : StartSessionJsonPayload
+    payloadObj = {
+        capabilities: {
+            alwaysMatch: {
+                acceptInsecureCerts,
+                edgeOptions: getBrowserOptions headless,
+                chromeOptions: getBrowserOptions headless,
+                firefoxOptions: getBrowserOptions headless,
+            },
+            # firstMatch: [],
+        },
+    }
+
+    payload = Encode.toBytes payloadObj (Json.utf8With { fieldNameMapping: Custom jsonWebdriverMapping })
 
     request : Task.Task StartSessionResponse _
     request = sendCommand host Post "/session" payload
@@ -271,8 +323,8 @@ sendKeys = \host, sessionId, elementId, str ->
 
 Option a : [Some a, None]
 
-mapNullableToJson : Option a -> OptionOrNull a
-mapNullableToJson = \val ->
+mapNullableToJsonWithNull : Option a -> OptionOrNull a
+mapNullableToJsonWithNull = \val ->
     when val is
         None -> OptionOrNull.null {}
         Some a -> OptionOrNull.some a
@@ -299,10 +351,10 @@ setWindowRect : Str, Str, SetWindowRectPayload -> Task.Task SetWindowRectJsonPay
 setWindowRect = \host, sessionId, { x ? None, y ? None, width ? None, height ? None } ->
     payloadObj : SetWindowRectJsonPayload
     payloadObj = {
-        x: x |> mapNullableToJson,
-        y: y |> mapNullableToJson,
-        width: width |> mapNullableToJson,
-        height: height |> mapNullableToJson,
+        x: x |> mapNullableToJsonWithNull,
+        y: y |> mapNullableToJsonWithNull,
+        width: width |> mapNullableToJsonWithNull,
+        height: height |> mapNullableToJsonWithNull,
     }
 
     payload = Encode.toBytes payloadObj Json.utf8
