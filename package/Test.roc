@@ -1,6 +1,6 @@
 ## `Test` module contains function to create and run tests.
 ## This module is used in the _"e2e framework mode"_.
-module [test, customTest, runAllTests, TestRunnerOptions]
+module [test, runTests, TestRunnerOptions]
 
 import pf.Task exposing [Task]
 import pf.Stdout
@@ -14,7 +14,7 @@ TestRunOptions : {
     screenshotOnFail : Bool,
 }
 
-TestBodyRunFunction : TestRunOptions -> Task {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str]
+TestBodyRunFunction : Driver, TestRunOptions -> Task {} [ErrorMsg Str, ErrorMsgWithScreenshot Str Str]
 
 TestBody a : Task {} [AssertionError Str, Custom Str, WebDriverError Str]a where a implements Inspect
 
@@ -33,58 +33,39 @@ TestDefinition := {
 ## ```
 test : Str, (Browser -> TestBody a) -> TestDefinition where a implements Inspect
 test = \name, testCallback ->
-    driver = Driver.create {}
-    (customTest driver) name testCallback
+    task = \driver, { screenshotOnFail } ->
+        browser = driver |> Browser.createBrowser!
+        result = testCallback browser |> Task.result!
 
-## Create a r2e test with custom `Driver` configuration.
-##
-## ```
-## driver = Driver.create (RemoteServer "http://my.webdriver.hub.com:9515")
-## test = customTest driver
-##
-## myTest = test "open roc-lang.org website" \browser ->
-##     # open roc-lang.org
-##     browser |> Browser.navigateTo! "http://roc-lang.org"
-## ```
-customTest : Driver -> (Str, (Internal.Browser -> TestBody a) -> TestDefinition) where a implements Inspect
-customTest = \driver ->
-    testFunc : Str, (Browser -> TestBody a) -> TestDefinition where a implements Inspect
-    testFunc = \name, testCallback ->
-        task = \{ screenshotOnFail } ->
-            browser = driver |> Browser.createBrowser!
-            result = testCallback browser |> Task.result!
+        screenshot = screenshotOnFail |> takeConditionalScreenshot! browser
+        browser |> Browser.close!
 
-            screenshot = screenshotOnFail |> takeConditionalScreenshot! browser
-            browser |> Browser.close!
+        Task.ok { result, screenshot }
 
-            Task.ok { result, screenshot }
+    taskSafe = \driver, options ->
+        output = task driver options |> Task.result!
+        when output is
+            # test run success
+            Ok { result: Ok _, screenshot: _ } -> Task.ok {}
+            # test run failed
+            Ok { result: Err err, screenshot: NoScreenshot } ->
+                Task.err (err |> errorToStr |> ErrorMsg)
 
-        taskSafe = \options ->
-            output = task options |> Task.result!
-            when output is
-                # test run success
-                Ok { result: Ok _, screenshot: _ } -> Task.ok {}
-                # test run failed
-                Ok { result: Err err, screenshot: NoScreenshot } ->
-                    Task.err (err |> errorToStr |> ErrorMsg)
+            # test run failed with screenshot
+            Ok { result: Err err, screenshot: ScreenshotBase64 screen } ->
+                Task.err (err |> errorToStr |> ErrorMsgWithScreenshot screen)
 
-                # test run failed with screenshot
-                Ok { result: Err err, screenshot: ScreenshotBase64 screen } ->
-                    Task.err (err |> errorToStr |> ErrorMsgWithScreenshot screen)
+            # should not happen - compiler
+            Ok { result: Err err, screenshot: _ } ->
+                Task.err (err |> errorToStr |> ErrorMsg)
 
-                # should not happen - compiler
-                Ok { result: Err err, screenshot: _ } ->
-                    Task.err (err |> errorToStr |> ErrorMsg)
+            # test run failed outside of test body e.g. could not create browser
+            Err err -> Task.err (err |> errorToStr |> ErrorMsg)
 
-                # test run failed outside of test body e.g. could not create browser
-                Err err -> Task.err (err |> errorToStr |> ErrorMsg)
-
-        @TestDefinition {
-            name,
-            testCallback: \options -> taskSafe options,
-        }
-
-    testFunc
+    @TestDefinition {
+        name,
+        testCallback: \driver, options -> taskSafe driver options,
+    }
 
 takeConditionalScreenshot : Bool, Internal.Browser -> Task [ScreenshotBase64 Str, NoScreenshot] _
 takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
@@ -98,21 +79,10 @@ takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
     else
         Task.ok NoScreenshot
 
-## Run a single r2e test.
-##
-## ```
-## myTest = test "open roc-lang.org website" \browser ->
-##     # open roc-lang.org
-##     browser |> Browser.navigateTo! "http://roc-lang.org"
-##
-## main =
-##     testResult = Test.runTest! myTest
-##     Test.printResults! [testResult]
-## ```
-runTest : TestDefinition, TestRunOptions -> Task.Task TestRunResult *
-runTest = \@TestDefinition { testCallback, name }, options ->
+runTest : TestDefinition, Driver, TestRunOptions -> Task.Task TestRunResult *
+runTest = \@TestDefinition { testCallback, name }, driver, options ->
     startTime = Utc.now!
-    result = (testCallback options) |> Task.result!
+    result = (testCallback driver options) |> Task.result!
     endTime = Utc.now!
     duration = (Utc.deltaAsMillis startTime endTime) |> Num.toU64
     Task.ok {
@@ -168,11 +138,11 @@ defaultReporters = []
 ##     browser |> Browser.navigateTo! "http://roc-lang.org"
 ##
 ## main =
-##     testResults = Test.runAllTests! [myTest] {}
+##     testResults = Test.runTests! [myTest] {}
 ##     Test.getResultCode! testResults
 ## ```
-# runAllTests : List TestDefinition, TestRunnerOptions -> Task.Task {} _
-runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, outDir ? defaultOutDir, reporters ? defaultReporters } ->
+# runTests : List TestDefinition, TestRunnerOptions -> Task.Task {} _
+runTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true, outDir ? defaultOutDir, reporters ? defaultReporters, driver ? Driver.create {} } ->
     printToConsole |> runIf! (Stdout.line "Starting test run...")
     testStartTime = Utc.now!
     allCount = tasks |> List.len
@@ -183,7 +153,7 @@ runAllTests = \tasks, { printToConsole ? Bool.true, screenshotOnFail ? Bool.true
             [task, .. as rest] ->
                 testIndex = allCount - (rest |> List.len)
                 printToConsole |> runIf! (printTestHeader task testIndex)
-                result = task |> runTest! { screenshotOnFail }
+                result = task |> runTest! driver { screenshotOnFail }
                 printToConsole |> runIf! (printTestResult task testIndex result.result)
                 newResults = List.append results result
                 Task.ok (Step (rest, newResults))
@@ -231,25 +201,6 @@ printResultSummary = \results ->
     else
         Stdout.line "$(color.green)$(msg)$(color.end)"
 
-## Get the result code.
-##
-## You can return this code from the `main` function
-## to indicate to the running CI process if the
-## test run was a success or a failure.
-##
-## ```
-## main =
-##     Stdout.line! "Starting test suite!"
-##
-##     tasks = [test1, test2]
-##
-##     # run all tests
-##     results = Test.runAllTests! tasks
-##     # print results to Stdout
-##     Test.printResults! results
-##     # return an exit code for the cli
-##     results |> Test.getResultCode
-## ```
 getResultCode : List TestRunResult -> Task.Task {} [Exit I32 Str]
 getResultCode = \results ->
     anyFailures =

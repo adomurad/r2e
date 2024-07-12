@@ -20,7 +20,7 @@ main =
         test6,
     ]
 
-    Test.runAllTests tests {}
+    Test.runTests tests {}
 
 # TODO - missing base64 -> List U8
 
