@@ -2,6 +2,11 @@
 
 Roc2End is a toy End2End framework.
 
+This is a library that has to be used with the basic-cli platform!
+
+Maybe you are looking for the
+[R2E Platform](https://github.com/adomurad/r2e-platform) ?
+
 [Full Documentation](https://adomurad.github.io/r2e-docs/)
 
 **WARNING: This package is importing modules from platform!** - this will be blocked in future. Waiting for `module params` to refactor this.
