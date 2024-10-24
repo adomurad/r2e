@@ -4,16 +4,21 @@ Roc2End is a toy End2End framework.
 
 This is a library that has to be used with the basic-cli platform!
 
+> ⚠️ **Warning**: Development for R2E library stoped. But checkout the
+> [R2E Platform](https://github.com/adomurad/r2e-platform)
+
 Maybe you are looking for the
 [R2E Platform](https://github.com/adomurad/r2e-platform) ?
 
 [Full Documentation](https://adomurad.github.io/r2e-docs/)
 
-**WARNING: This package is importing modules from platform!** - this will be blocked in future. Waiting for `module params` to refactor this.
+**WARNING: This package is importing modules from platform!** - this will be
+blocked in future. Waiting for `module params` to refactor this.
 
 So use at your own risk - sooner or later this will stop working.
 
-Current implementation is minimal, and a lot of webdriver features are still missing.
+Current implementation is minimal, and a lot of webdriver features are still
+missing.
 
 ## Demo
 
@@ -76,11 +81,15 @@ main =
 
 ## Setup
 
-To run examples in [examples/]() you need a running webdriver (msedgedrive, chromedrive, geckodriver, etc.)
+To run examples in [examples/]() you need a running webdriver (msedgedrive,
+chromedrive, geckodriver, etc.)
 
-Make sure that the webdriver has the same version as your browser. e.g. when using chromedriver 120, your chrome also has to be chrome 120.
+Make sure that the webdriver has the same version as your browser. e.g. when
+using chromedriver 120, your chrome also has to be chrome 120.
 
-1. download e.g. msedgedriver https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver for your system
+1. download e.g. msedgedriver
+   https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver for your
+   system
 1. unzip
 1. run in bash/cmd
 1. by default the driver server should run at http://localhost:9515
@@ -89,13 +98,16 @@ Make sure that the webdriver has the same version as your browser. e.g. when usi
 
 ### Docs
 
-There are no docs and doc-comments yet - `roc docs` won't generate docs for a `package` that is importing a `platform`.
+There are no docs and doc-comments yet - `roc docs` won't generate docs for a
+`package` that is importing a `platform`.
 
 Waiting for `module params`.
 
 ### WebDriver Client
 
-The [WebDriver.roc](package/WebDriver.roc) module is a thin http client wrapper for webdriver, and I try to stick to the [W3C Specification](https://www.w3.org/TR/webdriver2/).
+The [WebDriver.roc](package/WebDriver.roc) module is a thin http client wrapper
+for webdriver, and I try to stick to the
+[W3C Specification](https://www.w3.org/TR/webdriver2/).
 
 It might be a good idea to extract this to a separate package if it grows.
 
